@@ -1,0 +1,15 @@
+venv
+.git
+db.sqlite3
+.idea
+.vscode
+.env
+
+*/migrations/*
+!*/migrations/__init__.py
+backend/cleanpro/service/migrations/*
+!backend/cleanpro/service/migrations/__init__.py
+backend/cleanpro/users/migrations/*
+!backend/cleanpro/users/migrations/__init__.py
+backend/cleanpro/price/migrations/*
+!backend/cleanpro/price/migrations/__init__.py
