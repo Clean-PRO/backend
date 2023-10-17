@@ -4,16 +4,24 @@ ___
 
 ## Запуск проекта локально в контейнерах
 
-Клонировать репозиторий и перейти в него в командной строке
+Создать корневую папку с проектом (предлагается "cleanpro") и перейти в неё
 
 ```
-git clone git@github.com:order-cleaning-services/cleanpro.git -b develop
+mkdir cleanpro
+cd cleanpro
 ```
 
-Перейти в папку с backend проекта
+Загрузить актуальные версии frontend и backend
 
 ```
-cd cleanpro/backend/cleanpro
+git clone git@github.com:Clean-PRO/frontend.git
+git clone git@github.com:Clean-PRO/backend.git
+```
+
+Перейти в папку backend
+
+```
+cd backend/backend
 ```
 
 Создать файл переменных окружения из примера
@@ -28,12 +36,12 @@ cp .env.example .env
 nano .env
 ```
 
-Перейти в корневую папку проекта
+Перейти в корневую папку backend
 ```
-cd ../..
+cd ..
 ```
 
-Запустить Docker проект
+Запустить Docker (убедитесь, что docker daemon запущен в системе!)
 
 ```
 docker-compose up --build
@@ -45,10 +53,4 @@ docker-compose up --build
 
 ```
 http://localhost/
-```
-
-Документация проекта доступна по URL
-
-```
-http://localhost/redocs/ 
 ```
