@@ -12,16 +12,16 @@ services:
     volumes:
       - database_cs:/var/lib/postgresql/data/
     env_file:
-      - backend/cleanpro/.env
+      - backend/.env
 
   redis:
     image: redis:7.2.1-alpine
 
   backend:
     build:
-      context: backend/cleanpro
+      context: backend
       dockerfile: Dockerfile
-    env_file: backend/cleanpro/.env
+    env_file: backend/.env
     volumes:
       - static_cs:/app/static
       - media_cs:/app/media
@@ -31,7 +31,7 @@ services:
 
   frontend:
     build:
-      context: frontend
+      context: ../frontend
       dockerfile: Dockerfile
     volumes:
       - static_cs:/app/dist
