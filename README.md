@@ -52,5 +52,5 @@ docker-compose up --build
 По умолчанию проект доступен на localhost:80
 
 ```
-http://localhost/
+http://localhost:80/
 ```
