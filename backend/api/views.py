@@ -11,9 +11,6 @@ from rest_framework.utils.serializer_helpers import ReturnDict
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
-    OpenApiParameter,
-    OpenApiResponse,
-    inline_serializer,
 )
 
 from api.filters import FilterService
@@ -45,6 +42,14 @@ from api.utils import generate_code, get_available_time_json, send_mail
 from cleanpro.app_data import (
     EMAIL_CONFIRM_CODE_TEXT, EMAIL_CONFIRM_CODE_SUBJECT,
 )
+from .schemas_config import (
+    TYPES_CLEANING_SCHEMA,
+    MEASURE_SCHEMA,
+    SERVICE_SCHEMA,
+    RATING_SCHEMA,
+    ORDER_SCHEMA,
+    USER_SCHEMA,
+)
 from cleanpro.settings import ADDITIONAL_CS
 from services.models import CleaningType, Measure, Order, Rating, Service
 from services.signals import get_cached_reviews
@@ -52,20 +57,7 @@ from users.models import User
 
 
 @extend_schema(tags=["Measure"])
-@extend_schema_view(
-    list=extend_schema(
-        summary="Получить список всех единиц измерений.",
-    ),
-    create=extend_schema(
-        summary="Создать новую единицу измерения.",
-    ),
-    retrieve=extend_schema(
-        summary="Получить существующий единицу измерения.",
-    ),
-    update=extend_schema(
-        summary="Частично изменить существующую единицу измерения.",
-    ),
-)
+@extend_schema_view(**MEASURE_SCHEMA)
 class MeasureViewSet(viewsets.ModelViewSet):
     """Работа с единицами измерения услуг."""
     queryset = Measure.objects.all()
@@ -76,23 +68,7 @@ class MeasureViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(tags=["Types cleaning"])
-@extend_schema_view(
-    list=extend_schema(
-        summary="Получить список всех типов уборки.",
-    ),
-    create=extend_schema(
-        summary="Создать новый тип уборки.",
-    ),
-    retrieve=extend_schema(
-        summary="Получить существующий тип уборки.",
-        description="""
-            Возвращает тип уборки и список услуг, которые в нее входят.
-            """,
-    ),
-    update=extend_schema(
-        summary="Частично изменить существующий тип уборки.",
-    ),
-)
+@extend_schema_view(**TYPES_CLEANING_SCHEMA)
 class CleaningTypeViewSet(viewsets.ModelViewSet):
     """Работа с типами услуг."""
     queryset = CleaningType.objects.prefetch_related('service').all()
@@ -108,20 +84,7 @@ class CleaningTypeViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(tags=["Service"])
-@extend_schema_view(
-    list=extend_schema(
-        summary="Получить список всех услуг.",
-    ),
-    create=extend_schema(
-        summary="Создать новую услугу.",
-    ),
-    retrieve=extend_schema(
-        summary="Получить существующую услугу.",
-    ),
-    update=extend_schema(
-        summary="Частично изменить существующую услугу.",
-    ),
-)
+@extend_schema_view(**SERVICE_SCHEMA)
 class ServiceViewSet(viewsets.ModelViewSet):
     """Работа с услугами."""
     queryset = Service.objects.select_related('measure').all()
@@ -145,74 +108,7 @@ class ServiceViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(tags=["User"])
-@extend_schema_view(
-    list=extend_schema(
-        summary="Получить список всех пользователей.",
-        responses={
-            status.HTTP_200_OK: UserGetSerializer,
-        },
-    ),
-    create=extend_schema(
-        summary="Создать нового пользователя.",
-        responses={
-            status.HTTP_201_CREATED: UserCreateSerializer,
-        },
-    ),
-    update=extend_schema(
-        summary="Частично изменить существующего пользователя.",
-        responses={
-            status.HTTP_200_OK: UserGetSerializer,
-        },
-    ),
-    partial_update=extend_schema(
-        summary="Полностью изменить существующего пользователя.",
-        responses={
-            status.HTTP_200_OK: UserGetSerializer,
-        },
-    ),
-    orders=extend_schema(
-        summary="Получить список всех заказов пользователя.",
-        responses={
-            status.HTTP_200_OK: OrderGetSerializer,
-        },
-    ),
-    confirm_email=extend_schema(
-        summary="Подтверждение электронной почты.",
-        description="""
-            Смотрит request.data и проверяет следующие данные:
-            - email: адрес электронной почты.
-
-            Если данные являются валидными, генерирует произвольный
-            код подтверждения электронной почты. Этот код отправляется
-            в JSON клиенту и письмом на указанную электронную почту.
-            """,
-        responses={
-            status.HTTP_200_OK: EmailConfirmSerializer,
-        },
-    ),
-    me=extend_schema(
-        summary="Получить данные авторизованного пользователя.",
-        description="""
-                Так же возвращает два дополнительных поля:
-                    'is_staff',
-                    'is_cleaner',
-
-                если эти значения равняются True
-            """,
-        parameters=[
-            OpenApiParameter(name="callsign", required=True, type=str),
-        ],
-        responses={
-            status.HTTP_200_OK: UserGetSerializer,
-            # status.HTTP_500_INTERNAL_SERVER_ERROR: inline_serializer(
-            #     name='PasscodeResponse',
-            #     fields={
-            #         'passcode': serializers.CharField(),
-            #     }
-            # ),
-        },
-    ),
-)
+@extend_schema_view(**USER_SCHEMA)
 class UserViewSet(CreateUpdateListSet):
     queryset = User.objects.select_related('address').all()
 
@@ -275,33 +171,7 @@ class UserViewSet(CreateUpdateListSet):
 
 
 @extend_schema(tags=["Order"])
-@extend_schema_view(
-    list=extend_schema(
-        summary="Получить список всех заказов.",
-    ),
-    create=extend_schema(
-        summary="Создать новый заказ.",
-    ),
-    retrieve=extend_schema(
-        summary="Получить существующий заказ.",
-    ),
-    partial_update=extend_schema(
-        summary="Полностью изменить существующий заказ.",
-    ),
-    pay=extend_schema(
-        summary="Изменить статус оплаты существующего заказа.",
-    ),
-    rating=extend_schema(
-        summary="Получить существующий отзыв к заказу.",
-        description="""
-            Так же есть запросы POST, PUT к этому эндпоинту,
-            но пока это обновление еще не в develop.
-            """,
-    ),
-    get_available_time=extend_schema(
-        summary="Получить доступную дату и время для заказа.",
-    ),
-)
+@extend_schema_view(**ORDER_SCHEMA)
 class OrderViewSet(viewsets.ModelViewSet):
     """Список заказов."""
     http_method_names = ('get', 'post', 'patch', 'put',)
@@ -417,26 +287,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(tags=["Rating"])
-@extend_schema_view(
-    list=extend_schema(
-        summary="Получить список всех отзывов.",
-    ),
-    create=extend_schema(
-        summary="Создать новый отзыв.",
-        description="""
-            Создание простого отзыва, без прикрепления к конкретному заказу.
-            """,
-    ),
-    retrieve=extend_schema(
-        summary="Получить существующий отзыв.",
-    ),
-    partial_update=extend_schema(
-        summary="Полностью изменить существующий отзыв.",
-    ),
-    destroy=extend_schema(
-        summary="Удалить существующий отзыв.",
-    ),
-)
+@extend_schema_view(**RATING_SCHEMA)
 class RatingViewSet(viewsets.ModelViewSet):
     """Список отзывов."""
     queryset = Rating.objects.all()
