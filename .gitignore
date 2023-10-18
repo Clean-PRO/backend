@@ -63,12 +63,10 @@ db.sqlite3
 db.sqlite3-journal
 */migrations/*
 !*/migrations/__init__.py
-backend/cleanpro/service/migrations/*
-!backend/cleanpro/service/migrations/__init__.py
-backend/cleanpro/users/migrations/*
-!backend/cleanpro/users/migrations/__init__.py
-backend/cleanpro/price/migrations/*
-!backend/cleanpro/price/migrations/__init__.py
+backend/services/migrations/*
+!backend/services/migrations/__init__.py
+backend/users/migrations/*
+!backend/users/migrations/__init__.py
 
 # Flask stuff:
 instance/
