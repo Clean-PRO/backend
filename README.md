@@ -59,7 +59,6 @@ CleanPRO разработан с использованием следующих
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
 - [JavaScript] (v.1.8) - целевой язык программирования frontend
-- [NodeJS] (v.16.0) - среда выполнения JavaScript
 - [React] (v.18.2) - библиотека JavaScript для разработки пользовательских интерфейсов (UI) веб-приложений
 - [React Router] (v.6.15) - библиотека React для маршрутизации страниц
 - [Vite] (v.4.4) - инструмент сборки JavaScript-приложений
@@ -67,7 +66,6 @@ CleanPRO разработан с использованием следующих
 - [SCSS] - метаязык написания CSS-кода
 
 ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E) ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
-![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white) 
 ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![React Router](https://img.shields.io/badge/React_Router-CA4245?style=for-the-badge&logo=react-router&logoColor=white)
 ![Vue.js](https://img.shields.io/badge/vuejs-%2335495e.svg?style=for-the-badge&logo=vuedotjs&logoColor=%234FC08D)
@@ -164,7 +162,6 @@ ___
 [Docker]: <https://www.docker.com/>
 
 [JavaScript]: <https://www.javascript.com/>
-[NodeJS]: <https://nodejs.org/en/>
 [React]: <https://react.dev/>
 [React Router]: <https://reactrouter.com/en/main/>
 [Vite]: <https://vitejs.dev/>
