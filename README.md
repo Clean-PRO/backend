@@ -58,12 +58,12 @@ CleanPRO разработан с использованием следующих
 ![Nginx](https://img.shields.io/badge/nginx-%23009639.svg?style=for-the-badge&logo=nginx&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
-- [JavaScript] - целевой язык программирования frontend
-- [NodeJS] - среда выполнения JavaScript
-- [React] - библиотека JavaScript для разработки пользовательских интерфейсов (UI) веб-приложений
-- [React Router] - библиотека React для маршрутизации страниц
-- [Vite] - инструмент сборки JavaScript-приложений
-- [Redux] - библиотека  управления состоянием JavaScript приложений
+- [JavaScript] (v.1.8) - целевой язык программирования frontend
+- [NodeJS] (v.16.0) - среда выполнения JavaScript
+- [React] (v.18.2) - библиотека JavaScript для разработки пользовательских интерфейсов (UI) веб-приложений
+- [React Router] (v.6.15) - библиотека React для маршрутизации страниц
+- [Vite] (v.4.4) - инструмент сборки JavaScript-приложений
+- [Redux] (v.8.1) - библиотека  управления состоянием JavaScript приложений
 - [SCSS] - метаязык написания CSS-кода
 
 ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E) ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
