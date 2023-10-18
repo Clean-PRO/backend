@@ -354,29 +354,23 @@ class OrderViewSet(viewsets.ModelViewSet):
     )
     def rating(self, request, pk):
         """Оценить заказ."""
-        order = get_object_or_404(Order, id=pk)
-        request.data['id'] = order.id
+        request.data['id'] = pk
         if request.method == 'POST':
             serializer = OrderRatingSerializer(
                 data=request.data,
                 context={'request': request},
             )
-            if serializer.is_valid(raise_exception=True):
-                serializer.validated_data['user'] = request.user
-                serializer.validated_data['order'] = order
-                serializer.save()
-            self.perform_create(serializer)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'PUT':
+            order = get_object_or_404(Order, id=pk)
             rating = get_object_or_404(Rating, order=order, user=request.user)
             serializer = OrderRatingSerializer(
                 instance=rating,
                 data=request.data,
                 context={'request': request},
             )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
         detail=True,
