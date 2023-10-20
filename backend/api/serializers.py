@@ -352,14 +352,17 @@ class OrderPostSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, data):
-        """Создает новый заказ.
+        """
+        Создает новый заказ.
         Если пользователь отсутствует в базе данных - создает нового.
-        Если адрес отсутствует в базе данных - создает новый."""
+        Если адрес отсутствует в базе данных - создает новый.
+        Если заказ уже был создан - возвращает ошибку 400.
+        """
         random_cleaner: User = self.__get_random_cleaner(data=data)
         address: Address = get_or_create_address(
             address_data=data.get('address')
         )
-        user_data = data.get('user', {})
+        user_data: dict[str, str] = data.get('user', {})
         user: QuerySet = User.objects.filter(email=user_data.get('email'))
         if user:
             user: User = user.first()
@@ -373,7 +376,6 @@ class OrderPostSerializer(serializers.ModelSerializer):
             )
         order, is_created = Order.objects.get_or_create(
             user=user,
-            cleaner=random_cleaner,
             total_sum=data.get('total_sum'),
             total_time=data.get('total_time'),
             comment=data.get('comment'),
@@ -388,6 +390,8 @@ class OrderPostSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"Статус": "Заказ уже был создан."}
             )
+        order.cleaner: User = random_cleaner
+        order.save()
         self.__services_bulk_create(order, data.get('services'))
         return order
 
