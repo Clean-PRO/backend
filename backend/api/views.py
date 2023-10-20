@@ -176,8 +176,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     """Список заказов."""
     http_method_names = ('get', 'post', 'patch', 'put',)
     queryset = Order.objects.select_related('user', 'address',).all()
-    # TODO: лишний код. Можно оставить permission_classes на уровне проекта
-    #       и переписать get_permissions(self)
+    # TODO: так как переопределяется класс полностью, вынести это отсюда
+    #       и прописать в get_permissions(self)
     permission_classes = (IsOwner,)
 
     def get_permissions(self):
