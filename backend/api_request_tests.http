@@ -1,13 +1,81 @@
+# TODO LIST:
+#
+#     1) API раздел (аунтификация) требует разработки.
+#
+#     2) MEASURE:
+#
+#         - PUT/GET(id) в праметре пути внутри документации написано странное:
+#           "A unique integer value identifying this Единица измерения.".
+#         - PUT указано "частично изменить...", что не на 100% корректно,
+#           так как PUT запросы предполагают полное изменение модели.
+#           просто "Иззменить существующую...."
+#         - Позже надо добавить примеры ошибок для 400/403.
+#
+#         - GET доступен не админу. Такая информация не нужна юзеру.
+#           А вот GET(id) работает как надо.
+#         - PATCH для не админа вместо 401/405 возвращает 403.
+#         - DELETE для не админа вместо 401/405 возвращает 403.
+#         - DELETE для админа все же стоит сделать, наверное.
+#           Вдруг админ случайно создаст лишний. Ошибочный он поправит PUT,
+#           а вот лишний убрать не сможет. Что думаете? Только в моделях
+#           надо поставить защиту, чтобы не удалили единицу измерения,
+#           которая используется хотя бы в одной услуге.
+# 
+#     3) ORDERS:
+# 
+#         - POST запрос: максимально обезличить данные!
+#         - POST запрос: у нас нет ответа 200. Только 201 и 400.
+#         - PUT/GET(id) в праметре пути внутри документации написано странное:
+#           "A unique integer value identifying this Заказ.".
+#         - PATCH оплаты заказа: пользователь ничего не отправляет в теле запроса.
+#         - POST order/pk/rating/ - указано "ПОЛУЧИТЬ отзыа", в то время как
+#           это "ОСТАВИТЬ".
+#         - PUT на рейтинг содержит не те поля, что трубуются в запросе.
+# 
+#         - PATCH запрос зачем нужен? У нас же все на PUT/POST строится?
+#         - Оплата закза (PATCH /pay/) все же по логике должна быть
+#           POST запросом, так как мы не изменяем состояние заказа,
+#           а больше совершаем над ним дейтсвие - оплату.
+#           Пример, как бы человек сказал в жизни:
+#               я редактирую (PATHC/PUT) комментарий
+#               я совершаю (POST) оплату.
+#           Ну и к тому же у нас request.body может быть пустым - это тоже
+#           не PATCH логика.
+#         - PATCH оплаты СВОЕГО заказа не работает
+#           (Попытка оплатить чужой заказ. Оплата не возможна).
+#         - POST order/pk/rating/ - если администратору или не автору оставлять
+#           рейтинг, то будет "Доступ пользователю запрещен" 400.
+#           Почему бы не возвращать 403 в таком случае, от самого Django?
+#         - Предлагаю сделать отмену задачи также POST запросом на /pk/cancel/.
+#         - PATCH - можно оставить комментарий отмены 
+#         - Нет полей "cancel_time" и "cancel_date"
+
+#     4) RATINGS:
+# 
+#         -
+# 
+#         - слетает кэш (TODO для Кирилла)
+#         - PATH на свой закза: У вас недостаточно прав для выполнения данного действия.
+
+
 ##########################################################################
 ################################# TOKENS #################################
 ##########################################################################
 
-@admin_token = 84ef023fd7c98af89c7141a9ac2e333a56ce92a7
+
+@admin_token = 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+@token = 5a3bdb5009244ce5f9dba28439dfbd08495151f2
+
+
+##########################################################################
+################################ ENDPOINTS ###############################
+##########################################################################
+
 
 @login = http://127.0.0.1:80/api/auth/token/login/
 @logout = http://127.0.0.1:80/api/auth/token/logout/
 
-@measure = http://127.0.0.1:80/api/measure/
+@measures = http://127.0.0.1:80/api/measure/
 
 @orders = http://127.0.0.1:80/api/orders/
 
@@ -15,6 +83,14 @@
 
 @users = http://127.0.0.1:80/api/users/
 @users_me = http://127.0.0.1:80/api/users/me/
+
+
+##########################################################################
+################################### API ##################################
+##########################################################################
+
+
+# TODO: документация также требует доработки
 
 ###
 POST {{login}} HTTP/1.1
@@ -27,34 +103,7 @@ Content-Type: application/json
 
 ###
 POST {{logout}} HTTP/1.1
-Authorization: Token 84ef023fd7c98af89c7141a9ac2e333a56ce92a7
-
-### 
-GET {{users}} HTTP/1.1
-Authorization: Token 84ef023fd7c98af89c7141a9ac2e333a56ce92a7
-
-###
-PUT {{users}}1/ HTTP/1.1
-Authorization: Token 84ef023fd7c98af89c7141a9ac2e333a56ce92a7
-Content-Type: application/json
-
-{
-    "username": "Супер администратор",
-    "email": "admin@email.com",
-    "phone": "+79991112233",
-    "address": {
-        "city": "Москва",
-        "street": "Питерская",
-        "house": 14,
-        "entrance": 1,
-        "floor": 150,
-        "apartment": 999
-    }
-}
-
-### 
-GET {{users_me}} HTTP/1.1
-Authorization: Token 84ef023fd7c98af89c7141a9ac2e333a56ce92a7
+Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
 
 ###
 POST {{login}} HTTP/1.1
@@ -74,42 +123,98 @@ Content-Type: application/json
     "password": "MyPass!1"
 }
 
+##########################################################################
+################################# MEASURE ################################
+##########################################################################
+
 
 ### 
-POST {{users}}confirm_email/ HTTP/1.1
+GET {{measures}} HTTP/1.1
+# Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+Authorization: Token 5a3bdb5009244ce5f9dba28439dfbd08495151f2
+
+### 
+GET {{measures}}1/ HTTP/1.1
+# Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+Authorization: Token 5a3bdb5009244ce5f9dba28439dfbd08495151f2
+
+
+###
+POST {{measures}} HTTP/1.1
+Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+# Authorization: Token 5a3bdb5009244ce5f9dba28439dfbd08495151f2
 Content-Type: application/json
 
 {
-  "email": "myemail@email.com"
+  "title": "дом"
 }
 
-###
-GET {{ratings}} HTTP/1.1
+### 
+DELETE {{measures}}5/ HTTP/1.1
+Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+# Authorization: Token 5a3bdb5009244ce5f9dba28439dfbd08495151f2
 
-###
-GET {{ratings}}?limit=2 HTTP/1.1
+### 
+PATCH {{measures}}5/ HTTP/1.1
+Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+# Authorization: Token 5a3bdb5009244ce5f9dba28439dfbd08495151f2
 
-### TODO: логика недоделана!
-POST {{ratings}} HTTP/1.1
-Authorization: Token 84ef023fd7c98af89c7141a9ac2e333a56ce92a7
-
-###
-GET {{measure}} HTTP/1.1
-Authorization: Token 84ef023fd7c98af89c7141a9ac2e333a56ce92a7
-
-###
-POST {{measure}} HTTP/1.1
-Authorization: Token 84ef023fd7c98af89c7141a9ac2e333a56ce92a7
+### 
+PUT {{measures}}5/ HTTP/1.1
+Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+# Authorization: Token 5a3bdb5009244ce5f9dba28439dfbd08495151f2
 Content-Type: application/json
 
 {
-    "title": "квартира"
+  "title": "дом"
 }
 
 
-###
+##########################################################################
+################################## ORDER #################################
+##########################################################################
+
+
+### 
 GET {{orders}} HTTP/1.1
-Authorization: Token 84ef023fd7c98af89c7141a9ac2e333a56ce92a7
+Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+# Authorization: Token 5a3bdb5009244ce5f9dba28439dfbd08495151f2
+
+### 
+GET {{orders}}4/ HTTP/1.1
+# Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+Authorization: Token 5a3bdb5009244ce5f9dba28439dfbd08495151f2
+
+### 
+POST {{orders}}4/rating/ HTTP/1.1
+# Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+Authorization: Token 5a3bdb5009244ce5f9dba28439dfbd08495151f2
+Content-Type: application/json
+
+{
+  "text": "Неплохо! Тестовый заказ.",
+  "score": 5
+}
+
+### 
+PATCH {{orders}}4/ HTTP/1.1
+# Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+Authorization: Token 5a3bdb5009244ce5f9dba28439dfbd08495151f2
+
+
+###
+PATCH {{orders}}4/ HTTP/1.1
+Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+# Authorization: Token 5a3bdb5009244ce5f9dba28439dfbd08495151f2
+Content-Type: application/json
+
+{
+    "comment_cancel": "Ну просто",
+    "pay_status": "True",
+    "comment": "Коммент",
+    "cleaning_date": "2023-11-13",
+    "cleaning_time": "02:30"
+}
 
 ###
 POST {{orders}} HTTP/1.1
@@ -117,8 +222,8 @@ Content-Type: application/json
 
 {
     "user": {
-        "username": "Вика",
-        "email": "elpastel@email.com",
+        "username": "Кирилл",
+        "email": "newuser@email.com",
         "phone": "+7 777 777 77 77"
     },
     "comment": "Que paso, amigo? ;)",
@@ -150,23 +255,82 @@ Content-Type: application/json
 }
 
 ###
-PATCH {{orders}}1/ HTTP/1.1
-Authorization: Token 84ef023fd7c98af89c7141a9ac2e333a56ce92a7
-Content-Type: application/json
-
-{
-    "comment_cancel": "Ну просто",
-    "pay_status": "True",
-    "comment": "Коммент",
-    "cleaning_date": "2023-11-13",
-    "cleaning_time": "02:30"
-}
-
-###
 POST {{orders}}get_available_time/ HTTP/1.1
 Content-Type: application/json
 
 {
   "cleaning_date": "2023-11-12",
   "total_time": 200
+}
+
+###
+DELETE {{orders}}4/ HTTP/1.1
+# Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+Authorization: Token 5a3bdb5009244ce5f9dba28439dfbd08495151f2
+
+
+##########################################################################
+################################# RATINGS ################################
+##########################################################################
+
+###
+GET {{ratings}} HTTP/1.1
+
+###
+GET {{ratings}}?limit=2 HTTP/1.1
+
+###
+PATCH {{ratings}}4/ HTTP/1.1
+# Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+Authorization: Token 5a3bdb5009244ce5f9dba28439dfbd08495151f2
+Content-Type: application/json
+
+{
+    "score": 5
+}
+
+
+
+
+
+
+
+
+
+
+
+
+### 
+GET {{users}} HTTP/1.1
+Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+
+###
+PUT {{users}}1/ HTTP/1.1
+Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+Content-Type: application/json
+
+{
+    "username": "Супер администратор",
+    "email": "admin@email.com",
+    "phone": "+79991112233",
+    "address": {
+        "city": "Москва",
+        "street": "Питерская",
+        "house": 14,
+        "entrance": 1,
+        "floor": 150,
+        "apartment": 999
+    }
+}
+
+### 
+GET {{users_me}} HTTP/1.1
+Authorization: Token 0d938a6cb43b48c63e4722c18d998b1ed08e2fcb
+
+### 
+POST {{users}}confirm_email/ HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "myemail@email.com"
 }
