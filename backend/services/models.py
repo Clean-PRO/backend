@@ -261,7 +261,7 @@ class Order(models.Model):
         verbose_name_plural = 'Заказы'
 
     def __str__(self):
-        return f"Заказ №: {self.id}"
+        return f"Заказ № {self.id}"
 
     def save(self, *args, **kwargs):
         time_start: datetime = datetime.combine(
@@ -332,7 +332,7 @@ class Rating(models.Model):
         default=False,
     )
     order = models.ForeignKey(
-        verbose_name='Заказа',
+        verbose_name='Заказ',
         to=Order,
         related_name='rating',
         on_delete=models.SET_NULL,
