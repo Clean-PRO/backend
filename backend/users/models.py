@@ -143,7 +143,7 @@ class User(AbstractUser):
     username = models.CharField(
         verbose_name='Имя пользователя',
         max_length=USER_NAME_MAX_LEN,
-        validators=(validate_username,)
+        validators=(validate_username,),
     )
     email = models.EmailField(
         verbose_name='Адрес электронной почты',
@@ -159,6 +159,7 @@ class User(AbstractUser):
     phone = PhoneNumberField(
         verbose_name='Номер телефона',
         region='RU',
+        unique=True,
     )
     address = models.ForeignKey(
         Address,
