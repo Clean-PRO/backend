@@ -27,6 +27,7 @@ from api.serializers import (
     UserGetSerializer,
 )
 
+# TODO: "api" схема также требует корректировок.
 
 MEASURE_SCHEMA = {
     'list': extend_schema(
@@ -40,108 +41,6 @@ MEASURE_SCHEMA = {
     ),
     'update': extend_schema(
         summary="Частично изменить существующую единицу измерения.",
-    ),
-}
-
-TYPES_CLEANING_SCHEMA = {
-    'list': extend_schema(
-        summary="Получить список всех типов уборки.",
-    ),
-    'create': extend_schema(
-        summary="Создать новый тип уборки.",
-    ),
-    'retrieve': extend_schema(
-        summary="Получить существующий тип уборки.",
-        description="""
-            Возвращает тип уборки и список услуг, которые в нее входят.
-            """,
-    ),
-    'update': extend_schema(
-        summary="Частично изменить существующий тип уборки.",
-    ),
-}
-
-SERVICE_SCHEMA = {
-    'list': extend_schema(
-        summary="Получить список всех услуг.",
-    ),
-    'create': extend_schema(
-        summary="Создать новую услугу.",
-    ),
-    'retrieve': extend_schema(
-        summary="Получить существующую услугу.",
-    ),
-    'update': extend_schema(
-        summary="Частично изменить существующую услугу.",
-    ),
-}
-
-USER_SCHEMA = {
-    'list': extend_schema(
-        summary="Получить список всех пользователей.",
-        responses={
-            status.HTTP_200_OK: UserGetSerializer,
-        },
-    ),
-    'create': extend_schema(
-        summary="Создать нового пользователя.",
-        responses={
-            status.HTTP_201_CREATED: UserCreateSerializer,
-        },
-    ),
-    'update': extend_schema(
-        summary="Частично изменить существующего пользователя.",
-        responses={
-            status.HTTP_200_OK: UserGetSerializer,
-        },
-    ),
-    'partial_update': extend_schema(
-        summary="Полностью изменить существующего пользователя.",
-        responses={
-            status.HTTP_200_OK: UserGetSerializer,
-        },
-    ),
-    'orders': extend_schema(
-        summary="Получить список всех заказов пользователя.",
-        responses={
-            status.HTTP_200_OK: OrderGetSerializer,
-        },
-    ),
-    'confirm_email': extend_schema(
-        summary="Подтверждение электронной почты.",
-        description="""
-            Смотрит request.data и проверяет следующие данные:
-            - email: адрес электронной почты.
-
-            Если данные являются валидными, генерирует произвольный
-            код подтверждения электронной почты. Этот код отправляется
-            в JSON клиенту и письмом на указанную электронную почту.
-            """,
-        responses={
-            status.HTTP_200_OK: EmailConfirmSerializer,
-        },
-    ),
-    'me': extend_schema(
-        summary="Получить данные авторизованного пользователя.",
-        description="""
-                Так же возвращает два дополнительных поля:
-                    'is_staff',
-                    'is_cleaner',
-
-                если эти значения равняются True
-            """,
-        parameters=[
-            OpenApiParameter(name="callsign", required=True, type=str),
-        ],
-        responses={
-            status.HTTP_200_OK: UserGetSerializer,
-            status.HTTP_500_INTERNAL_SERVER_ERROR: inline_serializer(
-                name='PasscodeResponse',
-                fields={
-                    'passcode': serializers.CharField(),
-                }
-            ),
-        },
     ),
 }
 
@@ -244,5 +143,108 @@ RATING_SCHEMA = {
     ),
     'destroy': extend_schema(
         summary="Удалить существующий отзыв.",
+    ),
+}
+
+SERVICE_SCHEMA = {
+    'list': extend_schema(
+        summary="Получить список всех услуг.",
+    ),
+    'create': extend_schema(
+        summary="Создать новую услугу.",
+    ),
+    'retrieve': extend_schema(
+        summary="Получить существующую услугу.",
+    ),
+    'update': extend_schema(
+        summary="Частично изменить существующую услугу.",
+    ),
+}
+
+# TODO: тут и в документации более корректно будет "Cleaning types".
+TYPES_CLEANING_SCHEMA = {
+    'list': extend_schema(
+        summary="Получить список всех типов уборки.",
+    ),
+    'create': extend_schema(
+        summary="Создать новый тип уборки.",
+    ),
+    'retrieve': extend_schema(
+        summary="Получить существующий тип уборки.",
+        description="""
+            Возвращает тип уборки и список услуг, которые в нее входят.
+            """,
+    ),
+    'update': extend_schema(
+        summary="Частично изменить существующий тип уборки.",
+    ),
+}
+
+USER_SCHEMA = {
+    'list': extend_schema(
+        summary="Получить список всех пользователей.",
+        responses={
+            status.HTTP_200_OK: UserGetSerializer,
+        },
+    ),
+    'create': extend_schema(
+        summary="Создать нового пользователя.",
+        responses={
+            status.HTTP_201_CREATED: UserCreateSerializer,
+        },
+    ),
+    'update': extend_schema(
+        summary="Частично изменить существующего пользователя.",
+        responses={
+            status.HTTP_200_OK: UserGetSerializer,
+        },
+    ),
+    'partial_update': extend_schema(
+        summary="Полностью изменить существующего пользователя.",
+        responses={
+            status.HTTP_200_OK: UserGetSerializer,
+        },
+    ),
+    'orders': extend_schema(
+        summary="Получить список всех заказов пользователя.",
+        responses={
+            status.HTTP_200_OK: OrderGetSerializer,
+        },
+    ),
+    'confirm_email': extend_schema(
+        summary="Подтверждение электронной почты.",
+        description="""
+            Смотрит request.data и проверяет следующие данные:
+            - email: адрес электронной почты.
+
+            Если данные являются валидными, генерирует произвольный
+            код подтверждения электронной почты. Этот код отправляется
+            в JSON клиенту и письмом на указанную электронную почту.
+            """,
+        responses={
+            status.HTTP_200_OK: EmailConfirmSerializer,
+        },
+    ),
+    'me': extend_schema(
+        summary="Получить данные авторизованного пользователя.",
+        description="""
+                Так же возвращает два дополнительных поля:
+                    'is_staff',
+                    'is_cleaner',
+
+                если эти значения равняются True
+            """,
+        parameters=[
+            OpenApiParameter(name="callsign", required=True, type=str),
+        ],
+        responses={
+            status.HTTP_200_OK: UserGetSerializer,
+            status.HTTP_500_INTERNAL_SERVER_ERROR: inline_serializer(
+                name='PasscodeResponse',
+                fields={
+                    'passcode': serializers.CharField(),
+                }
+            ),
+        },
     ),
 }
