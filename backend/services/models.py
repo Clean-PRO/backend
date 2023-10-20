@@ -116,13 +116,13 @@ class ServicesInCleaningType(models.Model):
     cleaning_type = models.ForeignKey(
         CleaningType,
         related_name='services_in_cleaning',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         verbose_name='Набор услуг',
     )
     service = models.ForeignKey(
         Service,
         related_name='services_in_cleaning',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         verbose_name='Услуга',
     )
 
@@ -221,7 +221,7 @@ class Order(models.Model):
         verbose_name='Адрес',
         to=Address,
         related_name='orders',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )
     creation_date = models.DateField(
         verbose_name='Дата создания',
@@ -270,7 +270,7 @@ class Order(models.Model):
         )
         time_end = time_start + timedelta(minutes=self.total_time)
         self.cleaning_time_end = time_end.time()
-        super(Order, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 class ServicesInOrder(models.Model):
@@ -285,7 +285,7 @@ class ServicesInOrder(models.Model):
     service = models.ForeignKey(
         Service,
         related_name='services_in_order',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         verbose_name='Услуга',
     )
     amount = models.PositiveIntegerField(
