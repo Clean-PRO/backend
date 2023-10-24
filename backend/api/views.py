@@ -109,6 +109,10 @@ class ServiceViewSet(viewsets.ModelViewSet):
 
 @extend_schema(tags=["User"])
 @extend_schema_view(**USER_SCHEMA)
+# TODO: Наставник написал, какой смысл создавать CreateUpdateListSet.
+#       Я так подумал, этот список миксинов используется один раз. 
+#       Смысла в нем, не очень много. Может быть имеет смысл прямо
+#       тут и перечислить их, а не наследоваться.
 class UserViewSet(CreateUpdateListSet):
     queryset = User.objects.select_related('address').all()
 

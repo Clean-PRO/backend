@@ -15,9 +15,15 @@ class IsAdminOrReadOnly(permissions.BasePermission):
         )
 
     def has_object_permission(self, request, view, obj):
+        # TODO: данная проверка дублирует логику has_permission,
+        #       а также не имеет отношения к объекту.
         return request.user.is_staff
 
 
+# TODO: я понял, что мне тут не понравилось исходно,
+#       когда на ревью написали "Не понимаю назначение этого класса".
+#       Проверка "не администратор" представляет собой проверку "владелец".
+#       В контексте использования: оплатить заказ может только владелец заказа.
 class IsNotAdmin(permissions.BasePermission):
     """
     Запрещает доступ администратору.
@@ -41,6 +47,8 @@ class IsOwner(permissions.BasePermission):
         return request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
+        # TODO: данная проверка второй частью дублирует логику has_permission,
+        #       а также не имеет отношения к объекту.
         return request.user == obj.user or request.user.is_staff
 
 
@@ -58,4 +66,6 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         )
 
     def has_object_permission(self, request, view, obj):
+        # TODO: данная проверка второй частью должна быть в has_permission,
+        #       а также не имеет отношения к объекту.
         return request.user == obj.user or request.user.is_staff
