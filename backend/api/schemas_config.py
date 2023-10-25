@@ -30,55 +30,55 @@ from api.serializers import (
 
 MEASURE_SCHEMA = {
     'list': extend_schema(
-        summary="Получить список всех единиц измерений.",
+        summary="Получить список единиц измерений.",
     ),
     'create': extend_schema(
         summary="Создать новую единицу измерения.",
     ),
     'retrieve': extend_schema(
-        summary="Получить существующую единицу измерения.",
+        summary="Получить единицу измерения.",
     ),
     'update': extend_schema(
-        summary="Частично изменить существующую единицу измерения.",
+        summary="Обновить единицу измерения.",
     ),
 }
 
 TYPES_CLEANING_SCHEMA = {
     'list': extend_schema(
-        summary="Получить список всех типов уборки.",
+        summary="Получить список типов уборки.",
     ),
     'create': extend_schema(
         summary="Создать новый тип уборки.",
     ),
     'retrieve': extend_schema(
-        summary="Получить существующий тип уборки.",
+        summary="Получить тип уборки.",
         description="""
             Возвращает тип уборки и список услуг, которые в нее входят.
             """,
     ),
     'update': extend_schema(
-        summary="Частично изменить существующий тип уборки.",
+        summary="Обновить тип уборки.",
     ),
 }
 
 SERVICE_SCHEMA = {
     'list': extend_schema(
-        summary="Получить список всех услуг.",
+        summary="Получить список услуг.",
     ),
     'create': extend_schema(
         summary="Создать новую услугу.",
     ),
     'retrieve': extend_schema(
-        summary="Получить существующую услугу.",
+        summary="Получить услугу.",
     ),
     'update': extend_schema(
-        summary="Частично изменить существующую услугу.",
+        summary="Обновить существующую услугу.",
     ),
 }
 
 USER_SCHEMA = {
     'list': extend_schema(
-        summary="Получить список всех пользователей.",
+        summary="Получить список пользователей.",
         responses={
             status.HTTP_200_OK: UserGetSerializer,
         },
@@ -90,13 +90,13 @@ USER_SCHEMA = {
         },
     ),
     'update': extend_schema(
-        summary="Частично изменить существующего пользователя.",
+        summary="Полностью обновить пользователя.",
         responses={
             status.HTTP_200_OK: UserGetSerializer,
         },
     ),
     'partial_update': extend_schema(
-        summary="Полностью изменить существующего пользователя.",
+        summary="Частично обновить пользователя.",
         responses={
             status.HTTP_200_OK: UserGetSerializer,
         },
@@ -122,7 +122,7 @@ USER_SCHEMA = {
         },
     ),
     'me': extend_schema(
-        summary="Получить данные авторизованного пользователя.",
+        summary="Получить авторизованного пользователя.",
         description="""
                 Так же возвращает два дополнительных поля:
                     'is_staff',
@@ -130,9 +130,6 @@ USER_SCHEMA = {
 
                 если эти значения равняются True
             """,
-        parameters=[
-            OpenApiParameter(name="callsign", required=True, type=str),
-        ],
         responses={
             status.HTTP_200_OK: UserGetSerializer,
             status.HTTP_500_INTERNAL_SERVER_ERROR: inline_serializer(
@@ -147,7 +144,7 @@ USER_SCHEMA = {
 
 ORDER_SCHEMA = {
     'list': extend_schema(
-        summary="Получить список всех заказов.",
+        summary="Получить список заказов.",
     ),
     'create': extend_schema(
         summary="Создать новый заказ.",
@@ -203,23 +200,19 @@ ORDER_SCHEMA = {
         ],
     ),
     'retrieve': extend_schema(
-        summary="Получить существующий заказ.",
+        summary="Получить заказ.",
     ),
     'update': extend_schema(
-        summary="Частично изменить существующий заказ.",
+        summary="Полностью обновить заказ.",
     ),
     'partial_update': extend_schema(
-        summary="Полностью изменить существующий заказ.",
+        summary="Частично обновить существующий заказ.",
     ),
     'pay': extend_schema(
         summary="Изменить статус оплаты существующего заказа.",
     ),
     'rating': extend_schema(
-        summary="Получить существующий отзыв к заказу.",
-        description="""
-            Так же есть запросы POST, PUT к этому эндпоинту,
-            но пока это обновление еще не в develop.
-            """,
+        summary="Создать/Обновить отзыв к заказу.",
     ),
     'get_available_time': extend_schema(
         summary="Получить доступную дату и время для заказа.",
@@ -228,7 +221,7 @@ ORDER_SCHEMA = {
 
 RATING_SCHEMA = {
     'list': extend_schema(
-        summary="Получить список всех отзывов.",
+        summary="Получить список отзывов.",
     ),
     'create': extend_schema(
         summary="Создать новый отзыв.",
@@ -237,10 +230,10 @@ RATING_SCHEMA = {
             """,
     ),
     'retrieve': extend_schema(
-        summary="Получить существующий отзыв.",
+        summary="Получить отзыв.",
     ),
     'partial_update': extend_schema(
-        summary="Полностью изменить существующий отзыв.",
+        summary="Частично обновить существующий отзыв.",
     ),
     'destroy': extend_schema(
         summary="Удалить существующий отзыв.",

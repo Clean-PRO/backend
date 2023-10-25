@@ -56,7 +56,6 @@ from services.signals import get_cached_reviews
 from users.models import User
 
 
-@extend_schema(tags=["Measure"])
 @extend_schema_view(**MEASURE_SCHEMA)
 class MeasureViewSet(viewsets.ModelViewSet):
     """Работа с единицами измерения услуг."""
@@ -67,7 +66,6 @@ class MeasureViewSet(viewsets.ModelViewSet):
     http_method_names = ('get', 'post', 'put',)
 
 
-@extend_schema(tags=["Types cleaning"])
 @extend_schema_view(**TYPES_CLEANING_SCHEMA)
 class CleaningTypeViewSet(viewsets.ModelViewSet):
     """Работа с типами услуг."""
@@ -83,7 +81,6 @@ class CleaningTypeViewSet(viewsets.ModelViewSet):
             return CreateCleaningTypeSerializer
 
 
-@extend_schema(tags=["Service"])
 @extend_schema_view(**SERVICE_SCHEMA)
 class ServiceViewSet(viewsets.ModelViewSet):
     """Работа с услугами."""
@@ -107,7 +104,6 @@ class ServiceViewSet(viewsets.ModelViewSet):
             return CreateServiceSerializer
 
 
-@extend_schema(tags=["User"])
 @extend_schema_view(**USER_SCHEMA)
 class UserViewSet(CreateUpdateListSet):
     queryset = User.objects.select_related('address').all()
@@ -170,7 +166,6 @@ class UserViewSet(CreateUpdateListSet):
         )
 
 
-@extend_schema(tags=["Order"])
 @extend_schema_view(**ORDER_SCHEMA)
 class OrderViewSet(viewsets.ModelViewSet):
     """Список заказов."""
@@ -286,7 +281,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         )
 
 
-@extend_schema(tags=["Rating"])
 @extend_schema_view(**RATING_SCHEMA)
 class RatingViewSet(viewsets.ModelViewSet):
     """Список отзывов."""
@@ -296,22 +290,21 @@ class RatingViewSet(viewsets.ModelViewSet):
     http_method_names = ('get', 'patch',)
     pagination_class = LimitOffsetPagination
 
-    # TODO (Кирилл): разобраться, что с кешированием не так.
-    # def list(self, request, *args, **kwargs):
-    #     cached_reviews: list[dict] = get_cached_reviews()
-    #     limit: int = request.query_params.get('limit')
-    #     if limit and cached_reviews:
-    #         try:
-    #             cached_reviews: list[dict] = cached_reviews[:int(limit)]
-    #         except ValueError:
-    #             raise serializers.ValidationError(
-    #                 detail="Invalid limit value. Limit must be an integer.",
-    #                 code=status.HTTP_400_BAD_REQUEST
-    #             )
-    #     return Response(
-    #         data=cached_reviews,
-    #         status=status.HTTP_200_OK,
-    #     )
+    def list(self, request, *args, **kwargs):
+        cached_reviews: list[dict] = get_cached_reviews()
+        limit: int = request.query_params.get('limit')
+        if limit and cached_reviews:
+            try:
+                cached_reviews: list[dict] = cached_reviews[:int(limit)]
+            except ValueError:
+                raise serializers.ValidationError(
+                    detail="Invalid limit value. Limit must be an integer.",
+                    code=status.HTTP_400_BAD_REQUEST
+                )
+        return Response(
+            data=cached_reviews,
+            status=status.HTTP_200_OK,
+        )
 
     def perform_create(self, serializer):
         order_id = self.kwargs.get('order_id')
