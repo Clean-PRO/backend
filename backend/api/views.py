@@ -296,21 +296,22 @@ class RatingViewSet(viewsets.ModelViewSet):
     http_method_names = ('get', 'patch',)
     pagination_class = LimitOffsetPagination
 
-    def list(self, request, *args, **kwargs):
-        cached_reviews: list[dict] = get_cached_reviews()
-        limit: int = request.query_params.get('limit')
-        if limit and cached_reviews:
-            try:
-                cached_reviews: list[dict] = cached_reviews[:int(limit)]
-            except ValueError:
-                raise serializers.ValidationError(
-                    detail="Invalid limit value. Limit must be an integer.",
-                    code=status.HTTP_400_BAD_REQUEST
-                )
-        return Response(
-            data=cached_reviews,
-            status=status.HTTP_200_OK,
-        )
+    # TODO (Кирилл): разобраться, что с кешированием не так.
+    # def list(self, request, *args, **kwargs):
+    #     cached_reviews: list[dict] = get_cached_reviews()
+    #     limit: int = request.query_params.get('limit')
+    #     if limit and cached_reviews:
+    #         try:
+    #             cached_reviews: list[dict] = cached_reviews[:int(limit)]
+    #         except ValueError:
+    #             raise serializers.ValidationError(
+    #                 detail="Invalid limit value. Limit must be an integer.",
+    #                 code=status.HTTP_400_BAD_REQUEST
+    #             )
+    #     return Response(
+    #         data=cached_reviews,
+    #         status=status.HTTP_200_OK,
+    #     )
 
     def perform_create(self, serializer):
         order_id = self.kwargs.get('order_id')
