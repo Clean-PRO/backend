@@ -8,10 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.utils.serializer_helpers import ReturnDict
-from drf_spectacular.utils import (
-    extend_schema,
-    extend_schema_view,
-)
+from drf_spectacular.utils import extend_schema_view
 
 from api.filters import FilterService
 from api.mixin import CreateUpdateListSet

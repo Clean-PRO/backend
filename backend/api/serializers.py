@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from drf_base64.fields import Base64ImageField
 from phonenumber_field.phonenumber import PhoneNumber
 from rest_framework import serializers, status
+from drf_spectacular.utils import extend_schema_serializer, OpenApiExample
 
 from api.utils import get_or_create_address, get_available_cleaners
 from cleanpro.app_data import ORDER_CANCELLED_STATUS
@@ -271,6 +272,46 @@ class OrderGetSerializer(serializers.ModelSerializer):
         )
 
 
+@extend_schema_serializer(
+    exclude_fields=('creation_date', 'creation_time',),
+    examples=[
+        OpenApiExample(
+            'Заказ №1',
+            description='Пример заказа',
+            value={
+                "user": {
+                    "username": "Иван Иванович",
+                    "email": "ivanstar@email.com",
+                    "phone": "+7 777 777 77 77"
+                },
+                "comment": "Дома много шерсти, у меня собака.",
+                "total_sum": 1000000,
+                "total_time": 80,
+                "cleaning_type": "1",
+                "services": [
+                    {
+                        "id": 1,
+                        "amount": 2
+                    },
+                    {
+                        "id": 3,
+                        "amount": 1
+                    }
+                ],
+                "rooms_number": 1,
+                "bathrooms_number": 3,
+                "address": {
+                    "city": 11,
+                    "street": 11,
+                    "house": 15,
+                    "entrance": 15,
+                    "floor": 15,
+                    "apartment": 15
+                },
+            },
+        ),
+    ]
+)
 class OrderPostSerializer(serializers.ModelSerializer):
     """Сериализатор для создания заказа."""
 
@@ -575,6 +616,21 @@ class PaySerializer(serializers.ModelSerializer):
         return instance
 
 
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            'Отзывы',
+            description='Все отзывы, на сайте и я Я.Карт',
+            value={
+                "id": 0,
+                "username": "string",
+                "pub_date": "2023-10-25T13:06:37.319Z",
+                "text": "Было приемлемо.",
+                "score": 4,
+            },
+        ),
+    ]
+)
 class RatingSerializer(serializers.ModelSerializer):
     """
     Сериализатор для представления отзыва на уборку на главной странице.
@@ -605,6 +661,19 @@ class RatingSerializer(serializers.ModelSerializer):
         return data
 
 
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            'Отзыв на заказ',
+            description='Пример отзыва на выполненный заказ.',
+            value={
+                "order": 0,
+                "text": "string",
+                "score": 5
+            },
+        ),
+    ]
+)
 class OrderRatingSerializer(RatingSerializer):
     """
     Сериализатор для создания/изменения отзыва на уборку в приложении.

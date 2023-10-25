@@ -1,63 +1,196 @@
 from rest_framework import status, serializers
 from drf_spectacular.utils import (
     extend_schema,
-    OpenApiExample,
-    OpenApiParameter,
+    # OpenApiExample,
+    # OpenApiParameter,
     # OpenApiResponse,
     inline_serializer,
 )
 # from drf_spectacular.types import OpenApiTypes
 
 from api.serializers import (
-    # AdminOrderPatchSerializer,
-    # CleaningGetTimeSerializer,
-    # CreateCleaningTypeSerializer,
+    AdminOrderPatchSerializer,
+    CleaningGetTimeSerializer,
+    CreateCleaningTypeSerializer,
     # CreateServiceSerializer,
-    EmailConfirmSerializer,
-    # GetCleaningTypeSerializer,
+    # EmailConfirmSerializer,
+    GetCleaningTypeSerializer,
     # GetServiceSerializer,
-    # MeasureSerializer,
+    MeasureSerializer,
     OrderGetSerializer,
     OrderPostSerializer,
-    # OrderRatingSerializer,
+    OrderRatingSerializer,
     # OwnerOrderPatchSerializer,
     # PaySerializer,
-    # RatingSerializer,
+    RatingSerializer,
     UserCreateSerializer,
     UserGetSerializer,
+    # PaySerializer,
 )
 
 
 MEASURE_SCHEMA = {
     'list': extend_schema(
         summary="Получить список единиц измерений.",
+        responses={
+            status.HTTP_200_OK: MeasureSerializer,
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='measure_list_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+        },
     ),
     'create': extend_schema(
         summary="Создать новую единицу измерения.",
+        responses={
+            status.HTTP_201_CREATED: MeasureSerializer,
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='measure_create_error_400',
+                fields={
+                    'detail': serializers.CharField(default="string.")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='measure_create_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+        },
     ),
     'retrieve': extend_schema(
         summary="Получить единицу измерения.",
+        responses={
+            status.HTTP_200_OK: MeasureSerializer,
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='measure_retrieve_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='measure_retrieve_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
+        },
     ),
     'update': extend_schema(
         summary="Обновить единицу измерения.",
+        responses={
+            status.HTTP_200_OK: MeasureSerializer,
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='measure_update_error_400',
+                fields={
+                    'detail': serializers.CharField(default="string")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='measure_update_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='measure_update_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
+        },
     ),
 }
 
 TYPES_CLEANING_SCHEMA = {
     'list': extend_schema(
         summary="Получить список типов уборки.",
+        responses={
+            status.HTTP_200_OK: GetCleaningTypeSerializer,
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='types_list_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+        },
     ),
     'create': extend_schema(
         summary="Создать новый тип уборки.",
+        responses={
+            status.HTTP_201_CREATED: CreateCleaningTypeSerializer,
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='types_create_error_400',
+                fields={
+                    'detail': serializers.CharField(default="string.")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='types_create_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+        },
     ),
     'retrieve': extend_schema(
         summary="Получить тип уборки.",
         description="""
             Возвращает тип уборки и список услуг, которые в нее входят.
             """,
+        responses={
+            status.HTTP_200_OK: GetCleaningTypeSerializer,
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='types_retrieve_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='types_retrieve_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
+        },
     ),
     'update': extend_schema(
         summary="Обновить тип уборки.",
+        responses={
+            status.HTTP_200_OK: GetCleaningTypeSerializer,
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='types_update_error_400',
+                fields={
+                    'detail': serializers.CharField(default="string")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='types_update_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='types_update_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
+        },
     ),
 }
 
@@ -81,30 +214,90 @@ USER_SCHEMA = {
         summary="Получить список пользователей.",
         responses={
             status.HTTP_200_OK: UserGetSerializer,
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='user_list_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
         },
     ),
     'create': extend_schema(
         summary="Создать нового пользователя.",
         responses={
             status.HTTP_201_CREATED: UserCreateSerializer,
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='user_create_error_400',
+                fields={
+                    'detail': serializers.CharField(default="string.")
+                },
+            ),
         },
     ),
     'update': extend_schema(
         summary="Полностью обновить пользователя.",
         responses={
             status.HTTP_200_OK: UserGetSerializer,
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='user_update_error_400',
+                fields={
+                    'detail': serializers.CharField(default="string")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='user_update_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='user_update_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
         },
     ),
     'partial_update': extend_schema(
         summary="Частично обновить пользователя.",
         responses={
             status.HTTP_200_OK: UserGetSerializer,
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='user_update_error_400',
+                fields={
+                    'detail': serializers.CharField(default="string")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='user_update_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='user_update_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
         },
     ),
     'orders': extend_schema(
         summary="Получить список всех заказов пользователя.",
         responses={
             status.HTTP_200_OK: OrderGetSerializer,
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='user_orders_list_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
         },
     ),
     'confirm_email': extend_schema(
@@ -118,7 +311,19 @@ USER_SCHEMA = {
             в JSON клиенту и письмом на указанную электронную почту.
             """,
         responses={
-            status.HTTP_200_OK: EmailConfirmSerializer,
+            status.HTTP_200_OK: inline_serializer(
+                name='user_email_200',
+                fields={
+                    'Token': serializers.CharField(default="string")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='user_email_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
         },
     ),
     'me': extend_schema(
@@ -145,97 +350,204 @@ USER_SCHEMA = {
 ORDER_SCHEMA = {
     'list': extend_schema(
         summary="Получить список заказов.",
+        responses={
+            status.HTTP_200_OK: OrderGetSerializer,
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='order_list_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+        },
     ),
     'create': extend_schema(
         summary="Создать новый заказ.",
         request=OrderPostSerializer,
         responses={
-            status.HTTP_200_OK: OrderPostSerializer,
             status.HTTP_201_CREATED: inline_serializer(
-                name='create',
+                name='order_create_201',
                 fields={
                     'Статус': serializers.CharField(default="Заказ создан.")
                 },
             ),
-        },
-        examples=[
-            OpenApiExample(
-                "Пример заказа",
-                description="Тестовый пример для заказа.",
-                value={
-                    "user": {
-                        "username": "Вика",
-                        "email": "elpastel@email.com",
-                        "phone": "+7 777 777 77 77"
-                    },
-                    "comment": "Que paso, amigo? ;)",
-                    "total_sum": 1000000,
-                    "total_time": 80,
-                    "cleaning_type": "1",
-                    "services": [
-                        {
-                            "id": 1,
-                            "amount": 2
-                        },
-                        {
-                            "id": 3,
-                            "amount": 1
-                        }
-                    ],
-                    "rooms_number": 1,
-                    "bathrooms_number": 3,
-                    "address": {
-                        "city": 11,
-                        "street": 11,
-                        "house": 15,
-                        "entrance": 15,
-                        "floor": 15,
-                        "apartment": 15
-                    },
-                    "cleaning_date": "2023-11-12",
-                    "cleaning_time": "12:30"
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='order_create_error_400',
+                fields={
+                    'staring': serializers.CharField(default="string")
                 },
-                status_codes=[str(status.HTTP_200_OK)],
             ),
-        ],
+        },
     ),
     'retrieve': extend_schema(
         summary="Получить заказ.",
+        responses={
+            status.HTTP_200_OK: OrderGetSerializer,
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='order_retrieve_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='order_retrieve_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
+        },
     ),
     'update': extend_schema(
         summary="Полностью обновить заказ.",
+        responses={
+            status.HTTP_200_OK: AdminOrderPatchSerializer,
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='order_update_error_400',
+                fields={
+                    'detail': serializers.CharField(default="string")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='order_update_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='order_update_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
+        },
     ),
-    'partial_update': extend_schema(
-        summary="Частично обновить существующий заказ.",
-    ),
+    # 'partial_update': extend_schema(
+    #     summary="Частично обновить существующий заказ.",
+    # ),
     'pay': extend_schema(
-        summary="Изменить статус оплаты существующего заказа.",
+        summary="Статус заказа.",
+        request=None,
+        responses={
+            status.HTTP_200_OK: inline_serializer(
+                name='pay_200',
+                fields={
+                    'pay_status': serializers.CharField(default="bool")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='pay_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='pay_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
+        }
     ),
     'rating': extend_schema(
         summary="Создать/Обновить отзыв к заказу.",
+        request=OrderRatingSerializer,
+        responses={
+            status.HTTP_200_OK: OrderRatingSerializer,
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='ratings_error_400',
+                fields={
+                    'detail': serializers.CharField(default="string")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='ratings_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='ratings_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
+        },
     ),
     'get_available_time': extend_schema(
         summary="Получить доступную дату и время для заказа.",
+        request=CleaningGetTimeSerializer,
+        responses={
+            status.HTTP_200_OK: inline_serializer(
+                name='get_time_200',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Пока хз, что должно возвращать.")
+                },
+            ),
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='rating_error_400',
+                fields={
+                    'detail': serializers.CharField(default="string")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='rating_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+        },
     ),
 }
 
 RATING_SCHEMA = {
     'list': extend_schema(
         summary="Получить список отзывов.",
-    ),
-    'create': extend_schema(
-        summary="Создать новый отзыв.",
         description="""
-            Создание простого отзыва, без прикрепления к конкретному заказу.
+            Полей 'order', 'user' не включены в ответ,
+            так как эти параметры есть только у отзывов на заказ.
             """,
+        responses={
+            status.HTTP_200_OK: RatingSerializer,
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='rating_list_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+        },
     ),
     'retrieve': extend_schema(
         summary="Получить отзыв.",
+        responses={
+            status.HTTP_200_OK: RatingSerializer,
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='rating_retrieve_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='rating_retrieve_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
+        },
     ),
     'partial_update': extend_schema(
         summary="Частично обновить существующий отзыв.",
-    ),
-    'destroy': extend_schema(
-        summary="Удалить существующий отзыв.",
     ),
 }
