@@ -1,21 +1,21 @@
 from rest_framework import status, serializers
 from drf_spectacular.utils import (
+    # extend_schema_view,
     extend_schema,
     # OpenApiExample,
     # OpenApiParameter,
     # OpenApiResponse,
     inline_serializer,
 )
-# from drf_spectacular.types import OpenApiTypes
 
 from api.serializers import (
     AdminOrderPatchSerializer,
     CleaningGetTimeSerializer,
     CreateCleaningTypeSerializer,
-    # CreateServiceSerializer,
+    CreateServiceSerializer,
     # EmailConfirmSerializer,
     GetCleaningTypeSerializer,
-    # GetServiceSerializer,
+    GetServiceSerializer,
     MeasureSerializer,
     OrderGetSerializer,
     OrderPostSerializer,
@@ -28,6 +28,7 @@ from api.serializers import (
     # PaySerializer,
 )
 
+"""Schema views constant."""
 
 MEASURE_SCHEMA = {
     'list': extend_schema(
@@ -39,6 +40,14 @@ MEASURE_SCHEMA = {
                 fields={
                     'detail': serializers.CharField(
                         default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='measure_list_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
                 },
             ),
         },
@@ -60,6 +69,14 @@ MEASURE_SCHEMA = {
                         default="Учетные данные не были предоставлены.")
                 },
             ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='measure_create_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
+                },
+            ),
         },
     ),
     'retrieve': extend_schema(
@@ -71,6 +88,14 @@ MEASURE_SCHEMA = {
                 fields={
                     'detail': serializers.CharField(
                         default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='measure_retrieve_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
                 },
             ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
@@ -99,8 +124,50 @@ MEASURE_SCHEMA = {
                         default="Учетные данные не были предоставлены.")
                 },
             ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='measure_update_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
+                },
+            ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
                 name='measure_update_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
+        },
+    ),
+    'destroy': extend_schema(
+        summary="Удалить единицу измерения.",
+        responses={
+            status.HTTP_204_NO_CONTENT: inline_serializer(
+                name='measure_destroy_202',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Успешно удаленно.")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='measure_destroy_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='measure_destroy_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='measure_destroy_error_404',
                 fields={
                     'detail': serializers.CharField(
                         default="Страница не найдена.")
@@ -122,6 +189,14 @@ TYPES_CLEANING_SCHEMA = {
                         default="Учетные данные не были предоставлены.")
                 },
             ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='types_list_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
+                },
+            ),
         },
     ),
     'create': extend_schema(
@@ -141,6 +216,14 @@ TYPES_CLEANING_SCHEMA = {
                         default="Учетные данные не были предоставлены.")
                 },
             ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='types_create_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
+                },
+            ),
         },
     ),
     'retrieve': extend_schema(
@@ -155,6 +238,14 @@ TYPES_CLEANING_SCHEMA = {
                 fields={
                     'detail': serializers.CharField(
                         default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='types_retrieve_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
                 },
             ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
@@ -183,6 +274,14 @@ TYPES_CLEANING_SCHEMA = {
                         default="Учетные данные не были предоставлены.")
                 },
             ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='types_update_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
+                },
+            ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
                 name='types_update_error_404',
                 fields={
@@ -197,15 +296,113 @@ TYPES_CLEANING_SCHEMA = {
 SERVICE_SCHEMA = {
     'list': extend_schema(
         summary="Получить список услуг.",
+        responses={
+            status.HTTP_200_OK: GetServiceSerializer,
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='service_list_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='service_list_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
+                },
+            ),
+        },
     ),
     'create': extend_schema(
         summary="Создать новую услугу.",
+        responses={
+            status.HTTP_201_CREATED: CreateServiceSerializer,
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='service_create_error_400',
+                fields={
+                    'detail': serializers.CharField(default="string.")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='service_create_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='service_create_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
+                },
+            ),
+        },
     ),
     'retrieve': extend_schema(
         summary="Получить услугу.",
+        responses={
+            status.HTTP_200_OK: GetServiceSerializer,
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='service_retrieve_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='service_retrieve_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='service_retrieve_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
+        },
     ),
     'update': extend_schema(
         summary="Обновить существующую услугу.",
+        responses={
+            status.HTTP_200_OK: GetServiceSerializer,
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='service_update_error_400',
+                fields={
+                    'detail': serializers.CharField(default="string")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='service_update_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='service_update_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='service_update_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
+        },
     ),
 }
 
@@ -240,20 +437,20 @@ USER_SCHEMA = {
         responses={
             status.HTTP_200_OK: UserGetSerializer,
             status.HTTP_400_BAD_REQUEST: inline_serializer(
-                name='user_update_error_400',
+                name='users_update_error_400',
                 fields={
                     'detail': serializers.CharField(default="string")
                 },
             ),
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='user_update_error_401',
+                name='users_update_error_401',
                 fields={
                     'detail': serializers.CharField(
                         default="Учетные данные не были предоставлены.")
                 },
             ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='user_update_error_404',
+                name='users_update_error_404',
                 fields={
                     'detail': serializers.CharField(
                         default="Страница не найдена.")
@@ -337,11 +534,27 @@ USER_SCHEMA = {
             """,
         responses={
             status.HTTP_200_OK: UserGetSerializer,
-            status.HTTP_500_INTERNAL_SERVER_ERROR: inline_serializer(
-                name='PasscodeResponse',
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='me_error_401',
                 fields={
-                    'passcode': serializers.CharField(),
-                }
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='me_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default="У вас недостаточно прав"
+                        "для выполнения данного действия.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='me_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
             ),
         },
     ),
@@ -425,15 +638,12 @@ ORDER_SCHEMA = {
             ),
         },
     ),
-    # 'partial_update': extend_schema(
-    #     summary="Частично обновить существующий заказ.",
-    # ),
     'pay': extend_schema(
-        summary="Статус заказа.",
+        summary="Оплатить заказ",
         request=None,
         responses={
-            status.HTTP_200_OK: inline_serializer(
-                name='pay_200',
+            status.HTTP_202_ACCEPTED: inline_serializer(
+                name='pay_202',
                 fields={
                     'pay_status': serializers.CharField(default="bool")
                 },
@@ -549,5 +759,28 @@ RATING_SCHEMA = {
     ),
     'partial_update': extend_schema(
         summary="Частично обновить существующий отзыв.",
+        responses={
+            status.HTTP_200_OK: RatingSerializer,
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='ratings_update_error_400',
+                fields={
+                    'detail': serializers.CharField(default="string")
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='ratings_update_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Учетные данные не были предоставлены.")
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='ratings_update_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default="Страница не найдена.")
+                },
+            ),
+        },
     ),
 }

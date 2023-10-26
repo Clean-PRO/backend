@@ -599,7 +599,7 @@ class PaySerializer(serializers.ModelSerializer):
         user = request.user
         order_id = request.data.get('id',)
         order = get_object_or_404(Order, id=order_id)
-        if order.user is not user:
+        if order.user != user:
             raise serializers.ValidationError(
                 'Попытка оплатить чужой заказ. Оплата не возможна.')
         if order.pay_status:

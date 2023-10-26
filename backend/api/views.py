@@ -58,16 +58,16 @@ class MeasureViewSet(viewsets.ModelViewSet):
     """Работа с единицами измерения услуг."""
     queryset = Measure.objects.all()
     serializer_class = MeasureSerializer
-    permission_classes = (permissions.IsAuthenticated, IsAdminOrReadOnly,)
+    permission_classes = (permissions.IsAdminUser,)
     pagination_class = None
-    http_method_names = ('get', 'post', 'put',)
+    http_method_names = ('get', 'post', 'put', 'delete')
 
 
 @extend_schema_view(**TYPES_CLEANING_SCHEMA)
 class CleaningTypeViewSet(viewsets.ModelViewSet):
     """Работа с типами услуг."""
     queryset = CleaningType.objects.prefetch_related('service').all()
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (permissions.IsAdminUser,)
     pagination_class = None
     http_method_names = ('get', 'post', 'put')
 
@@ -82,7 +82,7 @@ class CleaningTypeViewSet(viewsets.ModelViewSet):
 class ServiceViewSet(viewsets.ModelViewSet):
     """Работа с услугами."""
     queryset = Service.objects.select_related('measure').all()
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (permissions.IsAdminUser,)
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = FilterService
     http_method_names = ('get', 'post', 'put',)
@@ -166,7 +166,7 @@ class UserViewSet(CreateUpdateListSet):
 @extend_schema_view(**ORDER_SCHEMA)
 class OrderViewSet(viewsets.ModelViewSet):
     """Список заказов."""
-    http_method_names = ('get', 'post', 'patch', 'put',)
+    http_method_names = ('get', 'post', 'put',)
     queryset = Order.objects.select_related('user', 'address',).all()
     # TODO: лишний код. Можно оставить permission_classes на уровне проекта
     #       и переписать get_permissions(self)
@@ -242,7 +242,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=('patch',),
+        methods=('post',),
         # TODO: сделать разрешение только создателю заказа.
         #       Можно без администратора, мысль здравая.
         permission_classes=(IsNotAdmin,),
@@ -255,7 +255,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             request=request,
             serializer_class=PaySerializer,
         )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
     @action(
         detail=False,
