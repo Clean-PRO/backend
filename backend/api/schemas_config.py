@@ -1,10 +1,6 @@
 from rest_framework import status, serializers
 from drf_spectacular.utils import (
-    # extend_schema_view,
     extend_schema,
-    # OpenApiExample,
-    # OpenApiParameter,
-    # OpenApiResponse,
     inline_serializer,
 )
 
@@ -13,25 +9,22 @@ from api.serializers import (
     CleaningGetTimeSerializer,
     CreateCleaningTypeSerializer,
     CreateServiceSerializer,
-    # EmailConfirmSerializer,
     GetCleaningTypeSerializer,
     GetServiceSerializer,
     MeasureSerializer,
     OrderGetSerializer,
     OrderPostSerializer,
     OrderRatingSerializer,
-    # OwnerOrderPatchSerializer,
-    # PaySerializer,
     RatingSerializer,
     UserCreateSerializer,
     UserGetSerializer,
-    # PaySerializer,
 )
 
 """Schema views constant."""
 
 MEASURE_SCHEMA = {
     'list': extend_schema(
+        description="Список всех единиц измерения.",
         summary="Получить список единиц измерений.",
         responses={
             status.HTTP_200_OK: MeasureSerializer,
@@ -53,6 +46,7 @@ MEASURE_SCHEMA = {
         },
     ),
     'create': extend_schema(
+        description="Создает новую единиц измерения.",
         summary="Создать новую единицу измерения.",
         responses={
             status.HTTP_201_CREATED: MeasureSerializer,
@@ -80,6 +74,8 @@ MEASURE_SCHEMA = {
         },
     ),
     'retrieve': extend_schema(
+        description="Возвращает единицу измерения "
+        "с указанным идентификатором.",
         summary="Получить единицу измерения.",
         responses={
             status.HTTP_200_OK: MeasureSerializer,
@@ -108,6 +104,8 @@ MEASURE_SCHEMA = {
         },
     ),
     'update': extend_schema(
+        description="Обновляет единицу измерения "
+        "с указанным идентификатором.",
         summary="Обновить единицу измерения.",
         responses={
             status.HTTP_200_OK: MeasureSerializer,
@@ -142,6 +140,8 @@ MEASURE_SCHEMA = {
         },
     ),
     'destroy': extend_schema(
+        description="Удаляет единицу измерения "
+        "с указанным идентификатором.",
         summary="Удалить единицу измерения.",
         responses={
             status.HTTP_204_NO_CONTENT: inline_serializer(
@@ -179,6 +179,7 @@ MEASURE_SCHEMA = {
 
 TYPES_CLEANING_SCHEMA = {
     'list': extend_schema(
+        description="Список всех типов уборки.",
         summary="Получить список типов уборки.",
         responses={
             status.HTTP_200_OK: GetCleaningTypeSerializer,
@@ -200,6 +201,7 @@ TYPES_CLEANING_SCHEMA = {
         },
     ),
     'create': extend_schema(
+        description="Создает новый тип уборки.",
         summary="Создать новый тип уборки.",
         responses={
             status.HTTP_201_CREATED: CreateCleaningTypeSerializer,
@@ -227,10 +229,9 @@ TYPES_CLEANING_SCHEMA = {
         },
     ),
     'retrieve': extend_schema(
+        description="Возвращает тип уборки "
+        "с указанным идентификатором.",
         summary="Получить тип уборки.",
-        description="""
-            Возвращает тип уборки и список услуг, которые в нее входят.
-            """,
         responses={
             status.HTTP_200_OK: GetCleaningTypeSerializer,
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
@@ -258,6 +259,8 @@ TYPES_CLEANING_SCHEMA = {
         },
     ),
     'update': extend_schema(
+        description="Обновляет тип уборки "
+        "с указанным идентификатором.",
         summary="Обновить тип уборки.",
         responses={
             status.HTTP_200_OK: GetCleaningTypeSerializer,
@@ -295,6 +298,7 @@ TYPES_CLEANING_SCHEMA = {
 
 SERVICE_SCHEMA = {
     'list': extend_schema(
+        description="Список всех услуг.",
         summary="Получить список услуг.",
         responses={
             status.HTTP_200_OK: GetServiceSerializer,
@@ -316,6 +320,7 @@ SERVICE_SCHEMA = {
         },
     ),
     'create': extend_schema(
+        description="Создает новый услугу.",
         summary="Создать новую услугу.",
         responses={
             status.HTTP_201_CREATED: CreateServiceSerializer,
@@ -343,6 +348,8 @@ SERVICE_SCHEMA = {
         },
     ),
     'retrieve': extend_schema(
+        description="Возвращает услугу "
+        "с указанным идентификатором.",
         summary="Получить услугу.",
         responses={
             status.HTTP_200_OK: GetServiceSerializer,
@@ -371,6 +378,8 @@ SERVICE_SCHEMA = {
         },
     ),
     'update': extend_schema(
+        description="Обновляет услугу "
+        "с указанным идентификатором.",
         summary="Обновить существующую услугу.",
         responses={
             status.HTTP_200_OK: GetServiceSerializer,
@@ -408,6 +417,7 @@ SERVICE_SCHEMA = {
 
 USER_SCHEMA = {
     'list': extend_schema(
+        description="Список всех пользователей.",
         summary="Получить список пользователей.",
         responses={
             status.HTTP_200_OK: UserGetSerializer,
@@ -421,6 +431,7 @@ USER_SCHEMA = {
         },
     ),
     'create': extend_schema(
+        description="Создает нового пользователя.",
         summary="Создать нового пользователя.",
         responses={
             status.HTTP_201_CREATED: UserCreateSerializer,
@@ -433,6 +444,8 @@ USER_SCHEMA = {
         },
     ),
     'update': extend_schema(
+        description="Полностью обновляет пользователя "
+        "с указанным идентификатором.",
         summary="Полностью обновить пользователя.",
         responses={
             status.HTTP_200_OK: UserGetSerializer,
@@ -459,6 +472,8 @@ USER_SCHEMA = {
         },
     ),
     'partial_update': extend_schema(
+        description="Частично обновляет пользователя "
+        "с указанным идентификатором.",
         summary="Частично обновить пользователя.",
         responses={
             status.HTTP_200_OK: UserGetSerializer,
@@ -485,6 +500,8 @@ USER_SCHEMA = {
         },
     ),
     'orders': extend_schema(
+        description="Список всех заказов пользователя "
+        "с указанным идентификатором.",
         summary="Получить список всех заказов пользователя.",
         responses={
             status.HTTP_200_OK: OrderGetSerializer,
@@ -499,14 +516,7 @@ USER_SCHEMA = {
     ),
     'confirm_email': extend_schema(
         summary="Подтверждение электронной почты.",
-        description="""
-            Смотрит request.data и проверяет следующие данные:
-            - email: адрес электронной почты.
-
-            Если данные являются валидными, генерирует произвольный
-            код подтверждения электронной почты. Этот код отправляется
-            в JSON клиенту и письмом на указанную электронную почту.
-            """,
+        description="Подтверждение электронной почты.",
         responses={
             status.HTTP_200_OK: inline_serializer(
                 name='user_email_200',
@@ -524,14 +534,9 @@ USER_SCHEMA = {
         },
     ),
     'me': extend_schema(
+        description="Возвращает пользователя "
+        "с указанным идентификатором.",
         summary="Получить авторизованного пользователя.",
-        description="""
-                Так же возвращает два дополнительных поля:
-                    'is_staff',
-                    'is_cleaner',
-
-                если эти значения равняются True
-            """,
         responses={
             status.HTTP_200_OK: UserGetSerializer,
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
@@ -562,6 +567,7 @@ USER_SCHEMA = {
 
 ORDER_SCHEMA = {
     'list': extend_schema(
+        description="Список всех заказов.",
         summary="Получить список заказов.",
         responses={
             status.HTTP_200_OK: OrderGetSerializer,
@@ -575,6 +581,7 @@ ORDER_SCHEMA = {
         },
     ),
     'create': extend_schema(
+        description="Создает новый заказ.",
         summary="Создать новый заказ.",
         request=OrderPostSerializer,
         responses={
@@ -593,6 +600,8 @@ ORDER_SCHEMA = {
         },
     ),
     'retrieve': extend_schema(
+        description="Возвращает заказ "
+        "с указанным идентификатором.",
         summary="Получить заказ.",
         responses={
             status.HTTP_200_OK: OrderGetSerializer,
@@ -613,7 +622,9 @@ ORDER_SCHEMA = {
         },
     ),
     'update': extend_schema(
-        summary="Полностью обновить заказ.",
+        description="Обновляет заказ "
+        "с указанным идентификатором.",
+        summary="Обновить заказ.",
         responses={
             status.HTTP_200_OK: AdminOrderPatchSerializer,
             status.HTTP_400_BAD_REQUEST: inline_serializer(
@@ -639,6 +650,8 @@ ORDER_SCHEMA = {
         },
     ),
     'pay': extend_schema(
+        description="Обновляет статус заказа "
+        "с указанным идентификатором.",
         summary="Оплатить заказ",
         request=None,
         responses={
@@ -665,6 +678,8 @@ ORDER_SCHEMA = {
         }
     ),
     'rating': extend_schema(
+        description="Создает/Обновляет отзыв к заказу "
+        "с указанным идентификатором.",
         summary="Создать/Обновить отзыв к заказу.",
         request=OrderRatingSerializer,
         responses={
@@ -692,6 +707,8 @@ ORDER_SCHEMA = {
         },
     ),
     'get_available_time': extend_schema(
+        description="Получает доступную дату к заказу "
+        "с указанным идентификатором.",
         summary="Получить доступную дату и время для заказа.",
         request=CleaningGetTimeSerializer,
         responses={
@@ -721,11 +738,8 @@ ORDER_SCHEMA = {
 
 RATING_SCHEMA = {
     'list': extend_schema(
+        description="Список всех отзывов.",
         summary="Получить список отзывов.",
-        description="""
-            Полей 'order', 'user' не включены в ответ,
-            так как эти параметры есть только у отзывов на заказ.
-            """,
         responses={
             status.HTTP_200_OK: RatingSerializer,
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
@@ -738,6 +752,8 @@ RATING_SCHEMA = {
         },
     ),
     'retrieve': extend_schema(
+        description="Возвращает отзыв "
+        "с указанным идентификатором.",
         summary="Получить отзыв.",
         responses={
             status.HTTP_200_OK: RatingSerializer,
@@ -758,7 +774,9 @@ RATING_SCHEMA = {
         },
     ),
     'partial_update': extend_schema(
-        summary="Частично обновить существующий отзыв.",
+        description="Обновляет отзыв "
+        "с указанным идентификатором.",
+        summary="Обновить существующий отзыв.",
         responses={
             status.HTTP_200_OK: RatingSerializer,
             status.HTTP_400_BAD_REQUEST: inline_serializer(
