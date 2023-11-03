@@ -39,7 +39,7 @@ from api.utils import generate_code, get_available_time_json, send_mail
 from cleanpro.app_data import (
     EMAIL_CONFIRM_CODE_TEXT, EMAIL_CONFIRM_CODE_SUBJECT,
 )
-from .schemas_config import (
+from .schemas import (
     TYPES_CLEANING_SCHEMA,
     MEASURE_SCHEMA,
     SERVICE_SCHEMA,
@@ -53,21 +53,11 @@ from services.signals import get_cached_reviews
 from users.models import User
 
 
-@extend_schema_view(**MEASURE_SCHEMA)
-class MeasureViewSet(viewsets.ModelViewSet):
-    """Работа с единицами измерения услуг."""
-    queryset = Measure.objects.all()
-    serializer_class = MeasureSerializer
-    permission_classes = (permissions.IsAdminUser,)
-    pagination_class = None
-    http_method_names = ('get', 'post', 'put', 'delete')
-
-
 @extend_schema_view(**TYPES_CLEANING_SCHEMA)
 class CleaningTypeViewSet(viewsets.ModelViewSet):
     """Работа с типами услуг."""
     queryset = CleaningType.objects.prefetch_related('service').all()
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (IsAdminOrReadOnly,)
     pagination_class = None
     http_method_names = ('get', 'post', 'put')
 
@@ -78,89 +68,14 @@ class CleaningTypeViewSet(viewsets.ModelViewSet):
             return CreateCleaningTypeSerializer
 
 
-@extend_schema_view(**SERVICE_SCHEMA)
-class ServiceViewSet(viewsets.ModelViewSet):
-    """Работа с услугами."""
-    queryset = Service.objects.select_related('measure').all()
-    permission_classes = (permissions.IsAdminUser,)
-    filter_backends = (filters.DjangoFilterBackend,)
-    filterset_class = FilterService
-    http_method_names = ('get', 'post', 'put',)
-
-    def get_queryset(self):
-        if not self.request.user.is_staff:
-            self.pagination_class = None
-            return self.queryset.filter(service_type=ADDITIONAL_CS)
-        else:
-            return self.queryset
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return GetServiceSerializer
-        else:
-            return CreateServiceSerializer
-
-
-@extend_schema_view(**USER_SCHEMA)
-class UserViewSet(CreateUpdateListSet):
-    queryset = User.objects.select_related('address').all()
-
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return UserCreateSerializer
-        return UserGetSerializer
-
-    @action(
-        detail=True,
-        url_path='orders',
-        methods=('get',),
-        permission_classes=(permissions.IsAdminUser,)
-    )
-    def orders(self, request, pk):
-        queryset = Order.objects.filter(
-            user=pk
-        ).select_related('user', 'cleaning_type', 'address')
-        page = self.paginate_queryset(queryset)
-        serializer = OrderGetSerializer(
-            page,
-            many=True,
-            context={'request': request}
-        )
-        return self.get_paginated_response(serializer.data)
-
-    @action(
-        detail=False,
-        methods=('get',),
-        permission_classes=(permissions.IsAuthenticated,)
-    )
-    def me(self, request):
-        instance: User = request.user
-        serializer: UserGetSerializer = UserGetSerializer(instance)
-        data: ReturnDict = serializer.data
-        for attribute in ('is_staff', 'is_cleaner'):
-            if getattr(self.request.user, attribute):
-                data[attribute] = True
-        return Response(data)
-
-    @action(
-        detail=False,
-        url_path='confirm_email',
-        methods=('post',),
-        permission_classes=(permissions.AllowAny,)
-    )
-    def confirm_email(self, request):
-        serializer: serializers = EmailConfirmSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        confirm_code: str = generate_code()
-        send_mail(
-            subject=EMAIL_CONFIRM_CODE_SUBJECT,
-            message=EMAIL_CONFIRM_CODE_TEXT.format(confirm_code=confirm_code),
-            to=(serializer.validated_data.get('email'),),
-        )
-        return Response(
-            data={"confirm_code": confirm_code},
-            status=status.HTTP_200_OK,
-        )
+@extend_schema_view(**MEASURE_SCHEMA)
+class MeasureViewSet(viewsets.ModelViewSet):
+    """Работа с единицами измерения услуг."""
+    queryset = Measure.objects.all()
+    serializer_class = MeasureSerializer
+    permission_classes = (permissions.IsAuthenticated, IsAdminOrReadOnly)
+    pagination_class = None
+    http_method_names = ('get', 'post', 'put', 'delete')
 
 
 @extend_schema_view(**ORDER_SCHEMA)
@@ -308,3 +223,88 @@ class RatingViewSet(viewsets.ModelViewSet):
         order = get_object_or_404(Order, id=order_id)
         serializer.save(user=self.request.user, order=order)
         return
+
+
+@extend_schema_view(**SERVICE_SCHEMA)
+class ServiceViewSet(viewsets.ModelViewSet):
+    """Работа с услугами."""
+    queryset = Service.objects.select_related('measure').all()
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = FilterService
+    http_method_names = ('get', 'post', 'put',)
+
+    def get_queryset(self):
+        if not self.request.user.is_staff:
+            self.pagination_class = None
+            return self.queryset.filter(service_type=ADDITIONAL_CS)
+        else:
+            return self.queryset
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return GetServiceSerializer
+        else:
+            return CreateServiceSerializer
+
+
+@extend_schema_view(**USER_SCHEMA)
+class UserViewSet(CreateUpdateListSet):
+    queryset = User.objects.select_related('address').all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return UserCreateSerializer
+        return UserGetSerializer
+
+    @action(
+        detail=True,
+        url_path='orders',
+        methods=('get',),
+        permission_classes=(permissions.IsAdminUser,)
+    )
+    def orders(self, request, pk):
+        queryset = Order.objects.filter(
+            user=pk
+        ).select_related('user', 'cleaning_type', 'address')
+        page = self.paginate_queryset(queryset)
+        serializer = OrderGetSerializer(
+            page,
+            many=True,
+            context={'request': request}
+        )
+        return self.get_paginated_response(serializer.data)
+
+    @action(
+        detail=False,
+        methods=('get',),
+        permission_classes=(permissions.IsAuthenticated,)
+    )
+    def me(self, request):
+        instance: User = request.user
+        serializer: UserGetSerializer = UserGetSerializer(instance)
+        data: ReturnDict = serializer.data
+        for attribute in ('is_staff', 'is_cleaner'):
+            if getattr(self.request.user, attribute):
+                data[attribute] = True
+        return Response(data)
+
+    @action(
+        detail=False,
+        url_path='confirm_email',
+        methods=('post',),
+        permission_classes=(permissions.AllowAny,)
+    )
+    def confirm_email(self, request):
+        serializer: serializers = EmailConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        confirm_code: str = generate_code()
+        send_mail(
+            subject=EMAIL_CONFIRM_CODE_SUBJECT,
+            message=EMAIL_CONFIRM_CODE_TEXT.format(confirm_code=confirm_code),
+            to=(serializer.validated_data.get('email'),),
+        )
+        return Response(
+            data={"confirm_code": confirm_code},
+            status=status.HTTP_200_OK,
+        )
