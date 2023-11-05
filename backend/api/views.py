@@ -41,7 +41,7 @@ from cleanpro.app_data import (
     EMAIL_CONFIRM_CODE_TEXT, EMAIL_CONFIRM_CODE_SUBJECT,
 )
 from .schemas import (
-    TYPES_CLEANING_SCHEMA,
+    CLEANING_TYPES_SCHEMA,
     TOKEN_DESTROY_SHEMA,
     TOKEN_CREATE_SHEMA,
     MEASURE_SCHEMA,
@@ -56,7 +56,7 @@ from services.signals import get_cached_reviews
 from users.models import User
 
 
-@extend_schema_view(**TYPES_CLEANING_SCHEMA)
+@extend_schema_view(**CLEANING_TYPES_SCHEMA)
 class CleaningTypeViewSet(viewsets.ModelViewSet):
     """Работа с типами услуг."""
     queryset = CleaningType.objects.prefetch_related('service').all()
