@@ -20,6 +20,17 @@ from api.serializers import (
     UserGetSerializer,
 )
 
+
+"""Schema serializers."""
+
+
+class TokenDestroySchema(serializers.Serializer):
+    """Вспомогательный сериализатор для TOKEN_DESTROY_SHEMA."""
+
+    password = serializers.CharField()
+    email = serializers.CharField()
+
+
 """Schema views constant."""
 
 MEASURE_SCHEMA = {
@@ -415,6 +426,30 @@ SERVICE_SCHEMA = {
     ),
 }
 
+TOKEN_CREATE_SHEMA = {
+    'description': "Создает token авторизации.",
+    'summary': "Создать token авторизации.",
+    'responses': {
+        status.HTTP_201_CREATED: inline_serializer(
+            name='token_create_201',
+            fields={'Token': serializers.CharField(default="string")},
+        ),
+    },
+}
+
+TOKEN_DESTROY_SHEMA = {
+    'description': "Удаляет token авторизации.",
+    'summary': "Удалить token авторизации.",
+    'request': TokenDestroySchema,
+    'responses': {
+        status.HTTP_204_NO_CONTENT: inline_serializer(
+            name='token_destroy_204',
+            fields={'string': serializers.CharField(
+                default="No response body")},
+        ),
+    },
+}
+
 USER_SCHEMA = {
     'list': extend_schema(
         description="Возвращает список пользователей.",
@@ -738,7 +773,7 @@ ORDER_SCHEMA = {
 
 RATING_SCHEMA = {
     'list': extend_schema(
-        description="Список всех отзывов.",
+        description="Возвращает список отзывов.",
         summary="Получить список отзывов.",
         responses={
             status.HTTP_200_OK: RatingSerializer,

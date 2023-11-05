@@ -8,7 +8,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.utils.serializer_helpers import ReturnDict
-from drf_spectacular.utils import extend_schema_view
+from drf_spectacular.utils import extend_schema_view, extend_schema
+from djoser.views import TokenCreateView, TokenDestroyView
 
 from api.filters import FilterService
 from api.mixin import CreateUpdateListSet
@@ -41,6 +42,8 @@ from cleanpro.app_data import (
 )
 from .schemas import (
     TYPES_CLEANING_SCHEMA,
+    TOKEN_DESTROY_SHEMA,
+    TOKEN_CREATE_SHEMA,
     MEASURE_SCHEMA,
     SERVICE_SCHEMA,
     RATING_SCHEMA,
@@ -308,3 +311,13 @@ class UserViewSet(CreateUpdateListSet):
             data={"confirm_code": confirm_code},
             status=status.HTTP_200_OK,
         )
+
+
+@extend_schema(**TOKEN_CREATE_SHEMA)
+class TokenCreateShemaView(TokenCreateView):
+    pass
+
+
+@extend_schema(**TOKEN_DESTROY_SHEMA)
+class TokenDestroyShemaView(TokenDestroyView):
+    pass
