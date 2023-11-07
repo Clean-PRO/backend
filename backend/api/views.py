@@ -40,7 +40,7 @@ from api.utils import generate_code, get_available_time_json, send_mail
 from cleanpro.app_data import (
     EMAIL_CONFIRM_CODE_TEXT, EMAIL_CONFIRM_CODE_SUBJECT,
 )
-from .schemas import (
+from .schemas_views import (
     CLEANING_TYPES_SCHEMA,
     TOKEN_DESTROY_SHEMA,
     TOKEN_CREATE_SHEMA,

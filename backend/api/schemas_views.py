@@ -1,7 +1,7 @@
 from rest_framework import status, serializers
 from drf_spectacular.utils import (
-    extend_schema,
     inline_serializer,
+    extend_schema,
 )
 
 from api.serializers import (
@@ -816,7 +816,7 @@ USER_SCHEMA = {
 }
 
 
-"""Schema token constant."""
+"""Schema views token constant."""
 
 
 TOKEN_CREATE_SHEMA = {
