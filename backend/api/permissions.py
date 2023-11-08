@@ -17,6 +17,20 @@ class IsAdminOrReadOnly(permissions.BasePermission):
         )
 
 
+class IsCurrentUserOrAdmin(permissions.BasePermission):
+    """
+    Предоставляет доступ для обновления данных учетной записи:
+        - на чтение: авторизированному пользователю
+        - на запись: только администратору и автору
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        return request.user == obj or request.user.is_staff
+
+
 class IsOwnerOrAdmin(permissions.BasePermission):
     """
     Предоставляет доступ:
