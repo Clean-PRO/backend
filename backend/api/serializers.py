@@ -417,7 +417,7 @@ class OrderPostSerializer(serializers.ModelSerializer):
             address_data=data.get('address')
         )
         user_data: dict[str, str] = data.get('user', {})
-        user: User = User.objects.get(email=user_data.get('email'))
+        user: User = self.context['request'].user
         self.__check_user_data(
             address=address, user=user, user_data=user_data
         )
