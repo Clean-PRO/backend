@@ -17,12 +17,11 @@ from api.serializers import (
     UserSerializer,
 )
 
-
-class TokenDestroySchema(serializers.Serializer):
-    """Вспомогательный сериализатор для TOKEN_DESTROY_SCHEMA."""
-
-    password = serializers.CharField()
-    email = serializers.CharField()
+DEFAULT_400: str = 'Невозможно войти с предоставленными учетными данными.'
+DEFAULT_401: str = 'Недопустимый токен.'
+DEFAULT_403: str = 'У вас недостаточно прав для выполнения данного действия.'
+DEFAULT_404: str = 'Страница не найдена.'
+DEFAULT_REQUIRED: str = 'Обязательное поле.'
 
 
 CLEANING_TYPES_SCHEMA = {
@@ -31,21 +30,6 @@ CLEANING_TYPES_SCHEMA = {
         summary='Получить список типов уборки.',
         responses={
             status.HTTP_200_OK: GetCleaningTypeSerializer,
-            status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='types_list_error_401',
-                fields={
-                    'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
-                },
-            ),
-            status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='types_list_error_403',
-                fields={
-                    'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
-                },
-            ),
         },
     ),
     'create': extend_schema(
@@ -54,90 +38,79 @@ CLEANING_TYPES_SCHEMA = {
         responses={
             status.HTTP_201_CREATED: CreateCleaningTypeSerializer,
             status.HTTP_400_BAD_REQUEST: inline_serializer(
-                name='types_create_error_400',
+                name='cleaning_types_create_error_400',
                 fields={
-                    'detail': serializers.CharField(default='string.')
+                    'title': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'coefficient': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'service': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
                 },
             ),
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='types_create_error_401',
+                name='cleaning_types_create_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
                 },
             ),
             status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='types_create_error_403',
+                name='cleaning_types_create_error_403',
                 fields={
                     'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
+                        default=DEFAULT_403)
                 },
             ),
         },
     ),
     'retrieve': extend_schema(
-        description=('Возвращает тип уборки '
-                     'с указанным идентификатором.'),
+        description='Возвращает тип уборки с указанным идентификатором.',
         summary='Получить тип уборки.',
         responses={
             status.HTTP_200_OK: GetCleaningTypeSerializer,
-            status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='types_retrieve_error_401',
-                fields={
-                    'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
-                },
-            ),
-            status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='types_retrieve_error_403',
-                fields={
-                    'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
-                },
-            ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='types_retrieve_error_404',
+                name='cleaning_types_retrieve_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         },
     ),
     'update': extend_schema(
-        description=('Обновляет тип уборки '
-                     'с указанным идентификатором.'),
+        description='Обновляет тип уборки с указанным идентификатором.',
         summary='Обновить тип уборки.',
         responses={
             status.HTTP_200_OK: GetCleaningTypeSerializer,
             status.HTTP_400_BAD_REQUEST: inline_serializer(
-                name='types_update_error_400',
+                name='cleaning_types_update_error_400',
                 fields={
                     'detail': serializers.CharField(default='string')
                 },
             ),
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='types_update_error_401',
+                name='cleaning_types_update_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
                 },
             ),
             status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='types_update_error_403',
+                name='cleaning_types_update_error_403',
                 fields={
                     'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
+                        default=DEFAULT_403)
                 },
             ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='types_update_error_404',
+                name='cleaning_types_update_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         },
@@ -150,21 +123,6 @@ MEASURE_SCHEMA = {
         summary='Получить список единиц измерений.',
         responses={
             status.HTTP_200_OK: MeasureSerializer,
-            status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='measure_list_error_401',
-                fields={
-                    'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
-                },
-            ),
-            status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='measure_list_error_403',
-                fields={
-                    'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
-                },
-            ),
         },
     ),
     'create': extend_schema(
@@ -173,126 +131,105 @@ MEASURE_SCHEMA = {
         responses={
             status.HTTP_201_CREATED: MeasureSerializer,
             status.HTTP_400_BAD_REQUEST: inline_serializer(
-                name='measure_create_error_400',
+                name='measures_create_error_400',
                 fields={
-                    'detail': serializers.CharField(default='string.')
+                    'title': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
                 },
             ),
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='measure_create_error_401',
+                name='measures_create_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
                 },
             ),
             status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='measure_create_error_403',
+                name='measures_create_error_403',
                 fields={
                     'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
+                        default=DEFAULT_403)
                 },
             ),
         },
     ),
     'retrieve': extend_schema(
-        description=('Возвращает единицу измерения '
-                     'с указанным идентификатором.'),
+        description=(
+            'Возвращает единицу измерения с указанным идентификатором.'
+        ),
         summary='Получить единицу измерения.',
         responses={
             status.HTTP_200_OK: MeasureSerializer,
-            status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='measure_retrieve_error_401',
-                fields={
-                    'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
-                },
-            ),
-            status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='measure_retrieve_error_403',
-                fields={
-                    'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
-                },
-            ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='measure_retrieve_error_404',
+                name='measures_retrieve_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         },
     ),
     'update': extend_schema(
-        description=('Обновляет единицу измерения '
-                     'с указанным идентификатором.'),
+        description='Обновляет единицу измерения с указанным идентификатором.',
         summary='Обновить единицу измерения.',
         responses={
             status.HTTP_200_OK: MeasureSerializer,
             status.HTTP_400_BAD_REQUEST: inline_serializer(
-                name='measure_update_error_400',
+                name='measures_update_error_400',
                 fields={
-                    'detail': serializers.CharField(default='string')
+                    'title': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
                 },
             ),
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='measure_update_error_401',
+                name='measures_update_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
                 },
             ),
             status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='measure_update_error_403',
+                name='measures_update_error_403',
                 fields={
                     'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
+                        default=DEFAULT_403)
                 },
             ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='measure_update_error_404',
+                name='measures_update_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         },
     ),
     'destroy': extend_schema(
-        description=('Удаляет единицу измерения '
-                     'с указанным идентификатором.'),
+        description='Удаляет единицу измерения с указанным идентификатором.',
         summary='Удалить единицу измерения.',
         responses={
-            status.HTTP_204_NO_CONTENT: inline_serializer(
-                name='measure_destroy_202',
-                fields={
-                    'detail': serializers.CharField(
-                        default='Успешно удаленно.')
-                },
-            ),
+            status.HTTP_204_NO_CONTENT: None,
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='measure_destroy_error_401',
+                name='measures_destroy_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
                 },
             ),
             status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='measure_destroy_error_403',
+                name='measures_destroy_error_403',
                 fields={
                     'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
+                        default=DEFAULT_403)
                 },
             ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='measure_destroy_error_404',
+                name='measures_destroy_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         },
@@ -306,10 +243,10 @@ ORDER_SCHEMA = {
         responses={
             status.HTTP_200_OK: OrderGetSerializer,
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='order_list_error_401',
+                name='orders_list_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
                 },
             ),
         },
@@ -320,150 +257,252 @@ ORDER_SCHEMA = {
         request=OrderPostSerializer,
         responses={
             status.HTTP_201_CREATED: inline_serializer(
-                name='order_create_201',
+                name='orders_create_201',
                 fields={
                     'Статус': serializers.CharField(default='Заказ создан.')
                 },
             ),
             status.HTTP_400_BAD_REQUEST: inline_serializer(
-                name='order_create_error_400',
+                name='orders_create_error_400',
                 fields={
-                    'staring': serializers.CharField(default='string')
+                    'user': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'total_sum': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'total_time': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'cleaning_type': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'services': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'rooms_number': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'bathrooms_number': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'address': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'cleaning_date': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'cleaning_time': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
                 },
             ),
         },
     ),
     'retrieve': extend_schema(
-        description=('Возвращает заказ '
-                     'с указанным идентификатором.'),
+        description='Возвращает заказ с указанным идентификатором.',
         summary='Получить заказ.',
         responses={
             status.HTTP_200_OK: OrderGetSerializer,
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='order_retrieve_error_401',
+                name='orders_retrieve_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
                 },
             ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='order_retrieve_error_404',
+                name='orders_retrieve_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         },
     ),
     'update': extend_schema(
-        description=('Обновляет заказ '
-                     'с указанным идентификатором.'),
+        description='Обновляет заказ с указанным идентификатором.',
         summary='Обновить заказ.',
         responses={
             status.HTTP_200_OK: AdminOrderPatchSerializer,
             status.HTTP_400_BAD_REQUEST: inline_serializer(
-                name='order_update_error_400',
+                name='orders_update_error_400',
                 fields={
-                    'detail': serializers.CharField(default='string')
+                    'order_status': serializers.ListField(
+                        default=[
+                            'Вы можете установить только статус отмены заказа.'
+                        ],
+                    )
                 },
             ),
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='order_update_error_401',
+                name='orders_update_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
                 },
             ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='order_update_error_404',
+                name='orders_update_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         },
     ),
     'pay': extend_schema(
-        description=('Обновляет статус заказа '
-                     'с указанным идентификатором.'),
-        summary='Оплатить заказ',
+        description=(
+            'Устанавливает статус заказа с '
+            'указанным идентификатором как "оплачено".'
+        ),
+        summary='Оплатить заказ.',
         request=None,
         responses={
-            status.HTTP_202_ACCEPTED: inline_serializer(
-                name='pay_202',
+            status.HTTP_200_OK: inline_serializer(
+                name='orders_pay_200',
                 fields={
-                    'pay_status': serializers.CharField(default='bool')
+                    'pay_status': serializers.BooleanField(default=True)
                 },
             ),
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='pay_error_401',
+                name='orders_pay_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='orders_pay_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default=DEFAULT_403)
                 },
             ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='pay_error_404',
+                name='orders_pay_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         }
     ),
     'rating': extend_schema(
-        description=('Создает/Обновляет отзыв к заказу '
-                     'с указанным идентификатором.'),
-        summary='Создать/Обновить отзыв к заказу.',
+        description=(
+            'Создает отзыв к заказу с указанным идентификатором.'
+        ),
+        summary='Создать отзыв к заказу.',
         request=OrderRatingSerializer,
         responses={
             status.HTTP_200_OK: OrderRatingSerializer,
             status.HTTP_400_BAD_REQUEST: inline_serializer(
-                name='ratings_error_400',
+                name='orders_ratings_error_400',
                 fields={
-                    'detail': serializers.CharField(default='string')
+                    'order_status': serializers.ListField(
+                        default=[
+                            'Оставить отзыв на незавершенный заказ невозможно.'
+                        ],
+                    ),
+                    'rating_exists': serializers.ListField(
+                        default=[
+                            'Отзыв на этот заказ уже существует.'
+                        ],
+                    ),
+                    'cleaning_date': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'total_time': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
                 },
             ),
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='ratings_error_401',
+                name='orders_ratings_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
                 },
             ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='ratings_error_404',
+                name='orders_ratings_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         },
     ),
     'get_available_time': extend_schema(
-        description=('Получает доступную дату к заказу '
-                     'с указанным идентификатором.'),
+        description=(
+            'Получает доступное время для за дату к заказу '
+            'с указанным идентификатором.'
+        ),
         summary='Получить доступную дату и время для заказа.',
         request=CleaningGetTimeSerializer,
         responses={
             status.HTTP_200_OK: inline_serializer(
-                name='get_time_200',
+                name='orders_get_available_time_200',
                 fields={
-                    'detail': serializers.CharField(
-                        default='Пока хз, что должно возвращать.')
+                    '00:00': serializers.BooleanField(default=False),
+                    '00:30': serializers.BooleanField(default=False),
+                    '01:00': serializers.BooleanField(default=False),
+                    '01:30': serializers.BooleanField(default=False),
+                    '02:00': serializers.BooleanField(default=False),
+                    '02:30': serializers.BooleanField(default=False),
+                    '03:00': serializers.BooleanField(default=False),
+                    '03:30': serializers.BooleanField(default=False),
+                    '04:00': serializers.BooleanField(default=False),
+                    '04:30': serializers.BooleanField(default=False),
+                    '05:00': serializers.BooleanField(default=False),
+                    '05:30': serializers.BooleanField(default=False),
+                    '06:00': serializers.BooleanField(default=False),
+                    '06:30': serializers.BooleanField(default=False),
+                    '07:00': serializers.BooleanField(default=False),
+                    '07:30': serializers.BooleanField(default=False),
+                    '08:00': serializers.BooleanField(default=False),
+                    '08:30': serializers.BooleanField(default=False),
+                    '09:00': serializers.BooleanField(default=True),
+                    '09:30': serializers.BooleanField(default=True),
+                    '10:00': serializers.BooleanField(default=True),
+                    '10:30': serializers.BooleanField(default=True),
+                    '11:00': serializers.BooleanField(default=True),
+                    '11:30': serializers.BooleanField(default=True),
+                    '12:00': serializers.BooleanField(default=True),
+                    '12:30': serializers.BooleanField(default=True),
+                    '13:00': serializers.BooleanField(default=True),
+                    '13:30': serializers.BooleanField(default=True),
+                    '14:00': serializers.BooleanField(default=True),
+                    '14:30': serializers.BooleanField(default=True),
+                    '15:00': serializers.BooleanField(default=True),
+                    '15:30': serializers.BooleanField(default=True),
+                    '16:00': serializers.BooleanField(default=True),
+                    '16:30': serializers.BooleanField(default=True),
+                    '17:00': serializers.BooleanField(default=True),
+                    '17:30': serializers.BooleanField(default=True),
+                    '18:00': serializers.BooleanField(default=True),
+                    '18:30': serializers.BooleanField(default=True),
+                    '19:00': serializers.BooleanField(default=False),
+                    '19:30': serializers.BooleanField(default=False),
+                    '20:00': serializers.BooleanField(default=False),
+                    '20:30': serializers.BooleanField(default=False),
+                    '21:00': serializers.BooleanField(default=False),
+                    '21:30': serializers.BooleanField(default=False),
+                    '22:00': serializers.BooleanField(default=False),
+                    '22:30': serializers.BooleanField(default=False),
+                    '23:00': serializers.BooleanField(default=False),
+                    '23:30': serializers.BooleanField(default=False),
                 },
             ),
             status.HTTP_400_BAD_REQUEST: inline_serializer(
-                name='rating_error_400',
+                name='orders_get_available_time_error_400',
                 fields={
-                    'detail': serializers.CharField(default='string')
-                },
-            ),
-            status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='rating_error_401',
-                fields={
-                    'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                    'cleaning_date': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'total_time': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
                 },
             ),
         },
@@ -476,40 +515,24 @@ RATING_SCHEMA = {
         summary='Получить список отзывов.',
         responses={
             status.HTTP_200_OK: RatingSerializer,
-            status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='rating_list_error_401',
-                fields={
-                    'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
-                },
-            ),
         },
     ),
     'retrieve': extend_schema(
-        description=('Возвращает отзыв '
-                     'с указанным идентификатором.'),
+        description='Возвращает отзыв с указанным идентификатором.',
         summary='Получить отзыв.',
         responses={
             status.HTTP_200_OK: RatingSerializer,
-            status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='rating_retrieve_error_401',
-                fields={
-                    'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
-                },
-            ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
                 name='rating_retrieve_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         },
     ),
     'partial_update': extend_schema(
-        description=('Обновляет отзыв '
-                     'с указанным идентификатором.'),
+        description='Обновляет отзыв с указанным идентификатором.',
         summary='Обновить существующий отзыв.',
         responses={
             status.HTTP_200_OK: RatingSerializer,
@@ -523,14 +546,14 @@ RATING_SCHEMA = {
                 name='ratings_update_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
                 },
             ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
                 name='ratings_update_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         },
@@ -543,21 +566,6 @@ SERVICE_SCHEMA = {
         summary='Получить список услуг.',
         responses={
             status.HTTP_200_OK: GetServiceSerializer,
-            status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='service_list_error_401',
-                fields={
-                    'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
-                },
-            ),
-            status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='service_list_error_403',
-                fields={
-                    'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
-                },
-            ),
         },
     ),
     'create': extend_schema(
@@ -566,94 +574,116 @@ SERVICE_SCHEMA = {
         responses={
             status.HTTP_201_CREATED: CreateServiceSerializer,
             status.HTTP_400_BAD_REQUEST: inline_serializer(
-                name='service_create_error_400',
+                name='services_create_error_400',
                 fields={
-                    'detail': serializers.CharField(default='string.')
+                    'title': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'price': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'measure': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
+                    'image': serializers.ListField(
+                        default=['Ни одного файла не было отправлено.'],
+                    ),
+                    'cleaning_time': serializers.ListField(
+                        default=[DEFAULT_REQUIRED],
+                    ),
                 },
             ),
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='service_create_error_401',
+                name='services_create_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
                 },
             ),
             status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='service_create_error_403',
+                name='services_create_error_403',
                 fields={
-                    'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
+                    'detail': serializers.CharField(default=(DEFAULT_403)),
                 },
             ),
         },
     ),
     'retrieve': extend_schema(
-        description=('Возвращает услугу '
-                     'с указанным идентификатором.'),
+        description='Возвращает услугу с указанным идентификатором.',
         summary='Получить услугу.',
         responses={
             status.HTTP_200_OK: GetServiceSerializer,
-            status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='service_retrieve_error_401',
-                fields={
-                    'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
-                },
-            ),
-            status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='service_retrieve_error_403',
-                fields={
-                    'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
-                },
-            ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='service_retrieve_error_404',
+                name='services_retrieve_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         },
     ),
     'update': extend_schema(
-        description=('Обновляет услугу '
-                     'с указанным идентификатором.'),
+        description='Обновляет услугу с указанным идентификатором.',
         summary='Обновить существующую услугу.',
         responses={
             status.HTTP_200_OK: GetServiceSerializer,
-            status.HTTP_400_BAD_REQUEST: inline_serializer(
-                name='service_update_error_400',
-                fields={
-                    'detail': serializers.CharField(default='string')
-                },
-            ),
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='service_update_error_401',
+                name='services_update_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
                 },
             ),
             status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='service_update_error_403',
+                name='services_update_error_403',
                 fields={
-                    'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
+                    'detail': serializers.CharField(default=(DEFAULT_403)),
                 },
             ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='service_update_error_404',
+                name='services_update_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         },
     ),
+}
+
+TOKEN_CREATE_SCHEMA = {
+    'description': 'Создает токен авторизации.',
+    'summary': 'Создать токен авторизации.',
+    'responses': {
+        status.HTTP_200_OK: inline_serializer(
+            name='login_200',
+            fields={'auth_token': serializers.CharField(default='string')},
+        ),
+        status.HTTP_400_BAD_REQUEST: inline_serializer(
+            name='login_400',
+            fields={
+                'non_field_errors': serializers.ListField(
+                    default=[DEFAULT_400],
+                )
+            },
+        ),
+    },
+}
+
+TOKEN_DESTROY_SCHEMA = {
+    'description': 'Удаляет токен авторизации.',
+    'summary': 'Удалить токен авторизации.',
+    'responses': {
+        status.HTTP_204_NO_CONTENT: None,
+        status.HTTP_401_UNAUTHORIZED: inline_serializer(
+            name='logout_401',
+            fields={
+                'detail': serializers.CharField(
+                    default=DEFAULT_401,
+                ),
+            },
+        ),
+    },
 }
 
 USER_SCHEMA = {
@@ -663,10 +693,17 @@ USER_SCHEMA = {
         responses={
             status.HTTP_200_OK: UserSerializer,
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='user_list_error_401',
+                name='users_list_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='users_list_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default=DEFAULT_403)
                 },
             ),
         },
@@ -677,17 +714,53 @@ USER_SCHEMA = {
         responses={
             status.HTTP_201_CREATED: UserRegisterSerializer,
             status.HTTP_400_BAD_REQUEST: inline_serializer(
-                name='user_create_error_400',
+                name='users_create_error_400',
                 fields={
-                    'detail': serializers.CharField(default='string.')
+                    'email': serializers.CharField(
+                        default=(
+                            'Пользователь с таким адресом электронной '
+                            'почты уже зарегистрирован.'
+                        ),
+                    ),
+                },
+            ),
+        },
+    ),
+    'retrieve': extend_schema(
+        description=(
+            'Возвращает данные пользователя с указанным идентификатором.'
+        ),
+        summary='Получить данные пользователя.',
+        responses={
+            status.HTTP_200_OK: UserSerializer,
+            status.HTTP_401_UNAUTHORIZED: inline_serializer(
+                name='users_retrieve_error_401',
+                fields={
+                    'detail': serializers.CharField(
+                        default=DEFAULT_401)
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='users_retrieve_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default=DEFAULT_403)
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='users_retrieve_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default=DEFAULT_404)
                 },
             ),
         },
     ),
     'update': extend_schema(
-        description=('Полностью обновляет пользователя '
-                     'с указанным идентификатором.'),
-        summary='Полностью обновить пользователя.',
+        description=(
+            'Обновляет данные пользователя с указанным идентификатором.'
+        ),
+        summary='Обновить данные пользователя.',
         responses={
             status.HTTP_200_OK: UserSerializer,
             status.HTTP_400_BAD_REQUEST: inline_serializer(
@@ -700,136 +773,115 @@ USER_SCHEMA = {
                 name='users_update_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='users_update_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default=DEFAULT_403)
                 },
             ),
             status.HTTP_404_NOT_FOUND: inline_serializer(
                 name='users_update_error_404',
                 fields={
                     'detail': serializers.CharField(
-                        default='Страница не найдена.')
-                },
-            ),
-        },
-    ),
-    'partial_update': extend_schema(
-        description=('Частично обновляет пользователя '
-                     'с указанным идентификатором.'),
-        summary='Частично обновить пользователя.',
-        responses={
-            status.HTTP_200_OK: UserSerializer,
-            status.HTTP_400_BAD_REQUEST: inline_serializer(
-                name='user_update_error_400',
-                fields={
-                    'detail': serializers.CharField(default='string')
-                },
-            ),
-            status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='user_update_error_401',
-                fields={
-                    'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
-                },
-            ),
-            status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='user_update_error_404',
-                fields={
-                    'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_404)
                 },
             ),
         },
     ),
     'orders': extend_schema(
-        description=('Список всех заказов пользователя '
-                     'с указанным идентификатором.'),
-        summary='Получить список всех заказов пользователя.',
+        description=(
+            'Возвращает список заказов пользователя '
+            'с указанным идентификатором.'
+        ),
+        summary='Получить список заказов пользователя.',
         responses={
             status.HTTP_200_OK: OrderGetSerializer,
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='user_orders_list_error_401',
+                name='users_orders_list_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                        default=DEFAULT_401)
+                },
+            ),
+            status.HTTP_403_FORBIDDEN: inline_serializer(
+                name='users_orders_list_error_403',
+                fields={
+                    'detail': serializers.CharField(
+                        default=DEFAULT_403)
+                },
+            ),
+            status.HTTP_404_NOT_FOUND: inline_serializer(
+                name='users_orders_list_error_404',
+                fields={
+                    'detail': serializers.CharField(
+                        default=DEFAULT_404)
                 },
             ),
         },
     ),
     'confirm_email': extend_schema(
         summary='Подтверждение электронной почты.',
-        description='Подтверждение электронной почты.',
+        description='Подтвердить электронную почту.',
         responses={
             status.HTTP_200_OK: inline_serializer(
-                name='user_email_200',
+                name='users_confirm_email_200',
                 fields={
-                    'Token': serializers.CharField(default='string')
+                    'created': serializers.CharField(
+                        default=(
+                            'Введите пароль вашей учетной записи, который '
+                            'был выслан на указанную почту:'
+                        ),
+                    ),
                 },
             ),
-            status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='user_email_error_401',
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='users_confirm_email_error_401',
                 fields={
-                    'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
+                    'email': serializers.ListField(
+                        default=['Введите правильный адрес электронной почты.'],  # noqa (E501)
+                    ),
+                },
+            ),
+        },
+    ),
+    'confirm_password': extend_schema(
+        summary='Подтверждение пароля учетной записи.',
+        description='Подтвердить пароль учетной записи.',
+        responses={
+            status.HTTP_200_OK: inline_serializer(
+                name='users_confirm_password_200',
+                fields={
+                    'password': serializers.CharField(
+                        default='Пароль успешно подтвержден.'
+                    ),
+                },
+            ),
+            status.HTTP_400_BAD_REQUEST: inline_serializer(
+                name='users_confirm_password_error_400',
+                fields={
+                    'password': serializers.CharField(
+                        default='Указан неверный пароль.'
+                    ),
                 },
             ),
         },
     ),
     'me': extend_schema(
-        description=('Возвращает пользователя '
-                     'с указанным идентификатором.'),
-        summary='Получить авторизованного пользователя.',
+        description='Возвращает данные авторизированного пользователя.',
+        summary='Получить данные авторизированного пользователя.',
         responses={
             status.HTTP_200_OK: UserSerializer,
             status.HTTP_401_UNAUTHORIZED: inline_serializer(
-                name='me_error_401',
+                name='users_me_error_401',
                 fields={
                     'detail': serializers.CharField(
-                        default='Учетные данные не были предоставлены.')
-                },
-            ),
-            status.HTTP_403_FORBIDDEN: inline_serializer(
-                name='me_error_403',
-                fields={
-                    'detail': serializers.CharField(
-                        default='У вас недостаточно прав'
-                        'для выполнения данного действия.')
-                },
-            ),
-            status.HTTP_404_NOT_FOUND: inline_serializer(
-                name='me_error_404',
-                fields={
-                    'detail': serializers.CharField(
-                        default='Страница не найдена.')
+                        default=DEFAULT_401)
                 },
             ),
         },
     ),
-}
-
-
-"""Schema views token constant."""
-
-
-TOKEN_CREATE_SCHEMA = {
-    'description': 'Создает token авторизации.',
-    'summary': 'Создать token авторизации.',
-    'responses': {
-        status.HTTP_201_CREATED: inline_serializer(
-            name='token_create_201',
-            fields={'Token': serializers.CharField(default='string')},
-        ),
-    },
-}
-
-TOKEN_DESTROY_SCHEMA = {
-    'description': 'Удаляет token авторизации.',
-    'summary': 'Удалить token авторизации.',
-    'request': TokenDestroySchema,
-    'responses': {
-        status.HTTP_204_NO_CONTENT: inline_serializer(
-            name='token_destroy_204',
-            fields={'string': serializers.CharField(
-                default='No response body')},
-        ),
-    },
 }

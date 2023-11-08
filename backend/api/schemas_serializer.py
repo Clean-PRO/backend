@@ -18,7 +18,7 @@ ORDER_POST_SERIALIZER_SCHEMA: dict[str, any] = {
                 "comment": "Дома много шерсти, у меня собака.",
                 "total_sum": 1000000,
                 "total_time": 80,
-                "cleaning_type": "1",
+                "cleaning_type": 1,
                 "services": [
                     {
                         "id": 1,
@@ -39,6 +39,8 @@ ORDER_POST_SERIALIZER_SCHEMA: dict[str, any] = {
                     "floor": 15,
                     "apartment": 15,
                 },
+                "cleaning_date": "2023-11-12",
+                "cleaning_time": "15:30",
             },
         ),
     ],
@@ -50,7 +52,6 @@ ORDER_RATING_SERIALIZER_SCHEMA: dict[str, any] = {
             'Отзыв на заказ',
             description='Пример отзыва на выполненный заказ.',
             value={
-                "order": 0,
                 "text": "string",
                 "score": 5,
             },
