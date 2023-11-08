@@ -9,16 +9,19 @@ from django.shortcuts import get_object_or_404
 from drf_base64.fields import Base64ImageField
 from phonenumber_field.phonenumber import PhoneNumber
 from rest_framework import serializers, status
+from rest_framework.validators import UniqueValidator
 
-from api.utils import get_or_create_address, get_available_cleaners
+from api.utils import (
+    get_or_create_address, get_available_cleaners,
+)
 from cleanpro.app_data import ORDER_CANCELLED_STATUS
 from services.models import (
     Address, CleaningType, Measure, Order, Rating, Service, ServicesInOrder
 )
-from users.models import User, generate_random_password
+from users.models import User
 from users.validators import (
     ValidationError,
-    validate_email,
+    validate_email, validate_password,
     EMAIL_PATTERN, USERNAME_PATTERN
 )
 
@@ -46,19 +49,8 @@ class CleaningGetTimeSerializer(serializers.Serializer):
     total_time = serializers.IntegerField()
 
 
-class UserCreateSerializer(DjoserUserCreateSerializer):
-    """Сериализатор для регистрации пользователей."""
-
-    class Meta:
-        model = User
-        fields = (
-            'email',
-            'password',
-        )
-
-
-class UserGetSerializer(serializers.ModelSerializer):
-    """Сериализатор для предоставления пользователей."""
+class UserSerializer(serializers.ModelSerializer):
+    """Сериализатор пользователей."""
     address = AddressSerializer()
 
     class Meta:
@@ -82,8 +74,31 @@ class UserGetSerializer(serializers.ModelSerializer):
         return instance
 
 
-class EmailConfirmSerializer(serializers.Serializer):
-    """Подтвердить электронную почту."""
+class UserRegisterSerializer(DjoserUserCreateSerializer):
+    """Сериализатор для регистрации пользователей."""
+
+    email = serializers.CharField(
+        validators=[
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message=(
+                    'Пользователь с таким адресом электронной почты '
+                    'уже зарегистрирован.'
+                ),
+            ),
+        ],
+    )
+
+    class Meta:
+        model = User
+        fields = (
+            'email',
+            'password',
+        )
+
+
+class EmailVerifySerializer(serializers.Serializer):
+    """Сериализатор проверки корректности email."""
 
     email = serializers.EmailField()
 
@@ -91,6 +106,44 @@ class EmailConfirmSerializer(serializers.Serializer):
         """Производит валидацию поля email."""
         try:
             validate_email(value)
+        except ValidationError as err:
+            raise serializers.ValidationError(
+                detail=err,
+                code=status.HTTP_400_BAD_REQUEST,
+            )
+        return value
+
+
+class PasswordConfirmSerializer(serializers.ModelSerializer):
+    """Сериализатор проверки корректности email и password."""
+
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'username',
+            'email',
+            'phone',
+            'password',
+        )
+
+    def validate_email(self, value):
+        """Производит валидацию поля email."""
+        try:
+            validate_email(value)
+        except ValidationError as err:
+            raise serializers.ValidationError(
+                detail=err,
+                code=status.HTTP_400_BAD_REQUEST,
+            )
+        return value
+
+    def validate_password(self, value):
+        """Производит валидацию поля password."""
+        try:
+            validate_password(value)
         except ValidationError as err:
             raise serializers.ValidationError(
                 detail=err,
@@ -239,7 +292,7 @@ class ServicesInOrderSerializer(serializers.ModelSerializer):
 class OrderGetSerializer(serializers.ModelSerializer):
     """Сериализатор для представления заказа."""
 
-    user = UserGetSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     address = AddressSerializer(read_only=True)
     cleaning_type = GetCleaningTypeSerializer(read_only=True)
     services = ServicesInOrderSerializer(
@@ -303,6 +356,7 @@ class OrderPostSerializer(serializers.ModelSerializer):
             'cleaning_time',
         )
 
+    # TODO: сделать валидацию данных номера телефона и email
     def validate_user(self, user_data):
         """Производит валидацию данных о пользователе."""
         invalid_data: list[str] = []
@@ -363,17 +417,10 @@ class OrderPostSerializer(serializers.ModelSerializer):
             address_data=data.get('address')
         )
         user_data: dict[str, str] = data.get('user', {})
-        user: QuerySet = User.objects.filter(email=user_data.get('email'))
-        if user:
-            user: User = user.first()
-            self.__check_user_data(
-                address=address, user=user, user_data=user_data
-            )
-        else:
-            user: User = self.__create_new_user(
-                user_data=user_data,
-                address=address
-            )
+        user: User = User.objects.get(email=user_data.get('email'))
+        self.__check_user_data(
+            address=address, user=user, user_data=user_data
+        )
         order, is_created = Order.objects.get_or_create(
             user=user,
             total_sum=data.get('total_sum'),
@@ -414,19 +461,6 @@ class OrderPostSerializer(serializers.ModelSerializer):
         user.address = address if user.address is None else user.address
         user.save()
         return
-
-    def __create_new_user(self, user_data, address: Address) -> User:
-        """Создает нового пользователя."""
-        new_user: User = User.objects.create(
-            username=user_data.get('username'),
-            email=user_data.get('email'),
-            phone=user_data.get('phone'),
-        )
-        password: str = generate_random_password()
-        new_user.set_password(password)
-        new_user.address: Address = address
-        new_user.save()
-        return new_user
 
     def __get_random_cleaner(self, data) -> User:
         """
@@ -584,7 +618,7 @@ class RatingSerializer(serializers.ModelSerializer):
     Сериализатор для представления отзыва на уборку на главной странице.
     """
 
-    user = UserGetSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
 
     class Meta:
         fields = (
@@ -619,24 +653,12 @@ class OrderRatingSerializer(RatingSerializer):
         user = request.user
         order_id = request.data.get('id',)
         order = get_object_or_404(Order, id=order_id)
-        if (not request.user.is_authenticated or
-                request.user.is_staff):
+        if order.order_status != 'finished':
             raise serializers.ValidationError(
-                'Доступ пользователю запрещен.')
-        if request.method == 'POST':
-            if not order.user == user:
-                raise serializers.ValidationError(
-                    'Оставить отзыв на чужой заказ невозможно.')
-            if not order.order_status == 'finished':
-                raise serializers.ValidationError(
-                    'Оставить отзыв на незавершенный заказ невозможно.')
-            if Rating.objects.filter(order=order, user=user).exists():
-                raise serializers.ValidationError(
-                    'Отзыв на этот заказ вы уже оставляли.')
-        if request.method == 'PUT':
-            if not order.order_status == 'finished':
-                raise serializers.ValidationError(
-                    'Изменить отзыв на незавершенный заказ невозможно.')
+                'Изменить отзыв на незавершенный заказ невозможно.')
+        if Rating.objects.filter(order=order, user=user).exists():
+            raise serializers.ValidationError(
+                'Отзыв на этот заказ вы уже оставляли.')
         return data
 
     def create(self, validated_data):
