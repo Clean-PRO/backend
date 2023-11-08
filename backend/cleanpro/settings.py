@@ -6,20 +6,17 @@ from corsheaders.defaults import default_headers
 
 from .app_data import (
     BASE_DIR,
-
+    CLEANPRO_HOST,
     DEFAULT_FROM_EMAIL,
-
-    DB_ENGINE, DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER,
+    DATABASE_POSTGRESQL, DATABASE_SQLITE,
+    SECRET_KEY,
 )
+
 
 """App settings."""
 
 
-DEBUG = True
-
-CLEANPRO_HOST = os.getenv('HOST_YANDEX_MAPS', None)
-
-CLEANPRO_YA_MAPS_ID = os.getenv('HOST_YANDEX_MAPS', None)
+DEBUG: bool = True
 
 
 """Celery settings."""
@@ -40,8 +37,8 @@ CELERY_BEAT_SCHEDULE = {
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_BROKER_URL = 'redis://cleanpro_redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://cleanpro_redis:6379/0'
 
 
 """Django settings."""
@@ -50,27 +47,11 @@ CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://redis:6379/1',
+        'LOCATION': 'redis://cleanpro_redis:6379/1',
     }
 }
 
-DATABASES = {
-    'default': {
-        'ENGINE': DB_ENGINE,
-        'NAME': DB_NAME,
-        'USER': DB_USER,
-        'PASSWORD': DB_PASSWORD,
-        'HOST': DB_HOST,
-        'PORT': DB_PORT,
-    }
-}
-# TODO: Пока оставить тут, используется для тестов. При релизе - удалить.
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+DATABASES = DATABASE_SQLITE if DEBUG else DATABASE_POSTGRESQL
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -141,13 +122,25 @@ EMAIL_HOST_USER: str = os.getenv('EMAIL_HOST_USER')
 
 EMAIL_HOST_PASSWORD: str = os.getenv('EMAIL_HOST_PASSWORD')
 
-EMAIL_USE_TLS: bool = bool(os.getenv('EMAIL_USE_TLS'))
+EMAIL_USE_TLS: str = os.getenv('EMAIL_USE_TLS', False)
+if EMAIL_USE_TLS == 'True':
+    EMAIL_USE_TLS: bool = True
+else:
+    EMAIL_USE_TLS: bool = False
 
-EMAIL_USE_SSL: bool = bool(os.getenv('EMAIL_USE_SSL'))
+EMAIL_USE_SSL: str = os.getenv('EMAIL_USE_SSL', False)
+if EMAIL_USE_SSL == 'True':
+    EMAIL_USE_SSL: bool = True
+else:
+    EMAIL_USE_SSL: bool = False
 
-EMAIL_SSL_CERTFILE: str = os.getenv('EMAIL_SSL_CERTFILE')
+EMAIL_SSL_CERTFILE: str = os.getenv('EMAIL_SSL_CERTFILE', 'None')
+if EMAIL_SSL_CERTFILE == 'None':
+    EMAIL_SSL_CERTFILE: None = None
 
-EMAIL_SSL_KEYFILE: str = os.getenv('EMAIL_SSL_KEYFILE')
+EMAIL_SSL_KEYFILE: str = os.getenv('EMAIL_SSL_KEYFILE', 'None')
+if EMAIL_SSL_KEYFILE == 'None':
+    EMAIL_SSL_KEYFILE: None = None
 
 EMAIL_TIMEOUT: int = int(os.getenv('EMAIL_TIMEOUT'))
 
@@ -182,8 +175,6 @@ TEMPLATES = [
 
 """Models data."""
 
-
-ADDITIONAL_CS = 'additional'
 
 ADMIN = 'admin'
 
@@ -237,9 +228,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# TODO архинебезопасно! Для прода вписать допустимые данные. Лучше через
-# переменные окружения, чтобы скрыть их от злоумышленников.
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    CLEANPRO_HOST
+]
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -251,11 +244,16 @@ CORS_ALLOW_HEADERS = [
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1',
+    f'https://{CLEANPRO_HOST}'
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    f'https://{CLEANPRO_HOST}',
 ]
 
 DJOSER = {
     'SERIALIZERS': {
-        'user': 'api.serializers.UserGetSerializer',
+        'user': 'api.serializers.UserSerializer',
     }
 }
 
@@ -274,4 +272,4 @@ MIDDLEWARE = [
     # 'django.middleware.cache.FetchFromCacheMiddleware',
 ]
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = SECRET_KEY

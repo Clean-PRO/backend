@@ -22,31 +22,34 @@ CLEANPRO_YA_MAPS_URL: str = (
 SCHEDULE_WORK_START_H: str = 9
 SCHEDULE_WORK_STOP_H: str = 21
 
-HOURS_IN_DAY: int = 24
-AVAILABLE_MINUTES: tuple[int] = (0, 30)
-
-
-def schedule_generate_bool(value: any = False):
-    """
-    Генерирует пустой словарь с графиком времени уборок.
-    Формат: {"00:00": value, "00:30": value, ... "23:30": value}
-    """
-    schedule_bool: dict[str, any] = {}
-    for hour in range(HOURS_IN_DAY):
-        for minute in AVAILABLE_MINUTES:
-            schedule_bool[f'{hour:02}:{minute:02}'] = value
-    return schedule_bool
-
 
 """Database settings."""
 
 
-DB_ENGINE = os.getenv('DB_ENGINE')
-DB_USER = os.getenv('POSTGRES_USER')
-DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
-DB_HOST = os.getenv('DB_HOST')
-DB_PORT = os.getenv('DB_PORT')
-DB_NAME = os.getenv('POSTGRES_DB')
+DB_ENGINE: str = os.getenv('DB_ENGINE')
+DB_USER: str = os.getenv('POSTGRES_USER')
+DB_PASSWORD: str = os.getenv('POSTGRES_PASSWORD')
+DB_HOST: str = os.getenv('DB_HOST')
+DB_PORT: str = os.getenv('DB_PORT')
+DB_NAME: str = os.getenv('POSTGRES_DB')
+
+DATABASE_POSTGRESQL: dict[str, dict[str, any]] = {
+    'default': {
+        'ENGINE': DB_ENGINE,
+        'NAME': DB_NAME,
+        'USER': DB_USER,
+        'PASSWORD': DB_PASSWORD,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
+    }
+}
+
+DATABASE_SQLITE: dict[str, dict[str, any]] = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 
 """Models data."""
@@ -54,32 +57,81 @@ DB_NAME = os.getenv('POSTGRES_DB')
 
 ADMIN_LIST_PER_PAGE: int = 15
 
+ADDRESS_CITY_MAX_LEN: int = 50
+ADDRESS_STREET_MAX_LEN: int = 50
+ADDRESS_HOUSE_MAX_VAL: int = 999
+ADDRESS_ENTRANCE_MAX_VAL: int = 50
+ADDRESS_FLOOR_MAX_VAL: int = 150
+ADDRESS_APARTMENT_MAX_VAL: int = 9999
+
+CLEANING_TIME_MINUTE_MIN: int = 1
+
+CLEANING_TYPE_TITLE_MAX_LEN: int = 25
+CLEANING_TYPE_COEF_MIN_VAL: int = 1
+
+MEASURE_TITLE_MAX_LEN: int = 25
+
+ORDER_ACCEPTED_STATUS: str = 'accepted'
 ORDER_CANCELLED_STATUS: str = 'cancelled'
+ORDER_CREATED_STATUS: str = 'created'
+ORDER_FINISHED_STATUS: str = 'finished'
+ORDER_STATUS_CHOICES: list[tuple[str]] = (
+    (ORDER_CREATED_STATUS, 'Создан'),
+    (ORDER_ACCEPTED_STATUS, 'Принят'),
+    (ORDER_FINISHED_STATUS, 'Завершен'),
+    (ORDER_CANCELLED_STATUS, 'Отменен'),
+)
+ORDER_COMMENT_MAX_LEN: int = 512
+ORDER_TOTAL_SUM_MIN_VAL: int = 1
+ORDER_TOTAL_TIME_MIN_VAL: int = 1
 
 REVIEW_CACHED_KEY: str = 'review_cached_key'
+
+SERVICES_ADDITIONAL: str = 'additional'
+SERVICES_MAIN: str = 'main'
+SERVICE_TYPE: list[tuple[str]] = [
+    (SERVICES_MAIN, 'Основная'),
+    (SERVICES_ADDITIONAL, 'Дополнительная'),
+]
+SERVICE_TYPE_MAX_LEN: int = 11
+SERVICE_PRICE_MIN_VAL: int = 60
+SERVICE_TITLE_MAX_LEN: int = 60
+
+USER_NAME_MAX_LEN: int = 30
+# Do not change, Django hash password with big length!
+USER_PASS_MAX_LEN: int = 512
+# Minimum 2 cycles are required!
+USER_PASS_RAND_CYCLES: int = 2
+USER_FULL_EMAIL_MAX_LEN: int = 80
 
 
 """Email data."""
 
+
 EMAIL_CODE_LENGTH: int = 8
 
-DEFAULT_FROM_EMAIL: str = 'cleanpronew2023@gmail.com'
+DEFAULT_FROM_EMAIL: str = os.getenv('DEFAULT_FROM_EMAIL')
 
 PASSWORD_RESET_LINK: str = None
 
-EMAIL_CONFIRM_CODE_SUBJECT: str = 'Confirm email | CleanPro'
+EMAIL_CONFIRM_EMAIL_SUBJECT: str = 'Подтверждение почты | CleanPro'
 
-EMAIL_CONFIRM_CODE_TEXT: str = (
-    'Hello there!\n'
-    '\n'
-    'Thank You for you ordering!'
-    '\n'
-    'To confirm your email please enter the code below into the cite.\n'
-    '\n'
-    '{confirm_code}\n'
-    '\n'
-    'Best regards,\n'
-    'The CleanPro Team'
+EMAIL_CONFIRM_EMAIL_TEXT: str = (
+    'Добро пожаловать в Cleanpro!'
+    '\n\n'
+    'Наша команда специалистов готова предложить '
+    'высококачественные клининговые услуги, которые сделают '
+    'ваше пространство сияюще чистым и ухоженным.'
+    '\n\n'
+    'Для подтверждения электронной почты пожалуйста введите '
+    'в появившемся окне на сайте пароль учетной записи, указанный ниже:'
+    '\n\n'
+    '{password}'
+    '\n\n'
+    'В целях безопасности рекомендуем вас сменить пароль в личном кабинете.'
+    '\n\n'
+    'С наилучшими пожеланиями,\n'
+    'Команда CleanPro'
 )
 
 EMAIL_REGISTER_SUBJECT: str = 'Welcome to CleanPro!'
@@ -102,3 +154,11 @@ EMAIL_REGISTER_TEXT: str = (
     'Best regards,\n'
     'The CleanPro Team'
 )
+
+
+"""Security data."""
+
+
+SECRET_KEY: str = os.getenv('SECRET_KEY')
+SECRET_SALT: str = os.getenv('SECRET_SALT')
+PASS_ITERATIONS: int = int(os.getenv('PASS_ITERATIONS'))
