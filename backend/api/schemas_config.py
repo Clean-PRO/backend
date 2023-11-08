@@ -13,7 +13,7 @@ from api.serializers import (
     # CleaningGetTimeSerializer,
     # CreateCleaningTypeSerializer,
     # CreateServiceSerializer,
-    EmailConfirmSerializer,
+    EmailVerifySerializer,
     # GetCleaningTypeSerializer,
     # GetServiceSerializer,
     # MeasureSerializer,
@@ -23,8 +23,8 @@ from api.serializers import (
     # OwnerOrderPatchSerializer,
     # PaySerializer,
     # RatingSerializer,
-    UserCreateSerializer,
-    UserGetSerializer,
+    UserRegisterSerializer,
+    UserSerializer,
 )
 
 # TODO: "api" схема также требует корректировок.
@@ -184,25 +184,25 @@ USER_SCHEMA = {
     'list': extend_schema(
         summary="Получить список всех пользователей.",
         responses={
-            status.HTTP_200_OK: UserGetSerializer,
+            status.HTTP_200_OK: UserSerializer,
         },
     ),
     'create': extend_schema(
         summary="Создать нового пользователя.",
         responses={
-            status.HTTP_201_CREATED: UserCreateSerializer,
+            status.HTTP_201_CREATED: UserRegisterSerializer,
         },
     ),
     'update': extend_schema(
         summary="Частично изменить существующего пользователя.",
         responses={
-            status.HTTP_200_OK: UserGetSerializer,
+            status.HTTP_200_OK: UserSerializer,
         },
     ),
     'partial_update': extend_schema(
         summary="Полностью изменить существующего пользователя.",
         responses={
-            status.HTTP_200_OK: UserGetSerializer,
+            status.HTTP_200_OK: UserSerializer,
         },
     ),
     'orders': extend_schema(
@@ -222,7 +222,7 @@ USER_SCHEMA = {
             в JSON клиенту и письмом на указанную электронную почту.
             """,
         responses={
-            status.HTTP_200_OK: EmailConfirmSerializer,
+            status.HTTP_200_OK: EmailVerifySerializer,
         },
     ),
     'me': extend_schema(
@@ -238,7 +238,7 @@ USER_SCHEMA = {
             OpenApiParameter(name="callsign", required=True, type=str),
         ],
         responses={
-            status.HTTP_200_OK: UserGetSerializer,
+            status.HTTP_200_OK: UserSerializer,
             status.HTTP_500_INTERNAL_SERVER_ERROR: inline_serializer(
                 name='PasscodeResponse',
                 fields={
