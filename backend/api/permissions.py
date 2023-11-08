@@ -1,5 +1,7 @@
 from rest_framework import permissions
 
+from cleanpro.app_data import ORDER_CREATED_STATUS
+
 
 class IsAdminOrReadOnly(permissions.BasePermission):
     """
@@ -14,29 +16,8 @@ class IsAdminOrReadOnly(permissions.BasePermission):
             request.user.is_staff
         )
 
-    def has_object_permission(self, request, view, obj):
-        # TODO: данная проверка дублирует логику has_permission,
-        #       а также не имеет отношения к объекту.
-        return request.user.is_staff
 
-
-# TODO: я понял, что мне тут не понравилось исходно,
-#       когда на ревью написали "Не понимаю назначение этого класса".
-#       Проверка "не администратор" представляет собой проверку "владелец".
-#       В контексте использования: оплатить заказ может только владелец заказа.
-class IsNotAdmin(permissions.BasePermission):
-    """
-    Запрещает доступ администратору.
-    """
-
-    def has_permission(self, request, view):
-        return (
-            request.user.is_authenticated and
-            not request.user.is_staff
-        )
-
-
-class IsOwner(permissions.BasePermission):
+class IsOwnerOrAdmin(permissions.BasePermission):
     """
     Предоставляет доступ:
         - на чтение: авторизированному пользователю
@@ -47,8 +28,6 @@ class IsOwner(permissions.BasePermission):
         return request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
-        # TODO: данная проверка второй частью дублирует логику has_permission,
-        #       а также не имеет отношения к объекту.
         return request.user == obj.user or request.user.is_staff
 
 
@@ -66,6 +45,25 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         )
 
     def has_object_permission(self, request, view, obj):
-        # TODO: данная проверка второй частью должна быть в has_permission,
-        #       а также не имеет отношения к объекту.
         return request.user == obj.user or request.user.is_staff
+
+
+class IsOwnerAbleToPay(permissions.BasePermission):
+    """
+    Предоставляет доступ для оплаты заказа:
+        - только автору объекта
+        - только по методу POST
+        - только если заказ имеет статус "создан"
+    """
+
+    def has_permission(self, request, view):
+        return (
+            request.method == 'POST' and
+            request.user.is_authenticated
+        )
+
+    def has_object_permission(self, request, view, obj):
+        return (
+            request.user == obj.user and
+            obj.order_status == ORDER_CREATED_STATUS
+        )
