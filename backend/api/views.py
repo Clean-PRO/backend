@@ -3,7 +3,6 @@
 
 from django.db.models import QuerySet
 from django.contrib.auth import authenticate
-from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
 from rest_framework import permissions, serializers, status, viewsets
@@ -11,10 +10,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.utils.serializer_helpers import ReturnDict
-from drf_spectacular.utils import (
-    extend_schema,
-    extend_schema_view,
-)
+from drf_spectacular.utils import extend_schema_view, extend_schema
+from djoser.views import TokenCreateView, TokenDestroyView
 
 from api.filters import FilterService
 from api.permissions import (
@@ -36,17 +33,20 @@ from api.serializers import (
     OrderRatingSerializer,
     OwnerOrderPatchSerializer,
     PasswordConfirmSerializer,
-    PaySerializer,
     RatingSerializer,
     UserSerializer,
     UserRegisterSerializer,
 )
 from api.utils import create_password, get_available_time_json, send_mail
 from cleanpro.app_data import (
-    EMAIL_CONFIRM_EMAIL_SUBJECT, EMAIL_CONFIRM_EMAIL_TEXT, SERVICES_ADDITIONAL,
+    EMAIL_CONFIRM_EMAIL_SUBJECT, EMAIL_CONFIRM_EMAIL_TEXT,
+    ORDER_ACCEPTED_STATUS, ORDER_CANCELLED_STATUS, ORDER_FINISHED_STATUS,
+    SERVICES_ADDITIONAL,
 )
-from .schemas_config import (
-    TYPES_CLEANING_SCHEMA,
+from .schemas_views import (
+    CLEANING_TYPES_SCHEMA,
+    TOKEN_DESTROY_SCHEMA,
+    TOKEN_CREATE_SCHEMA,
     MEASURE_SCHEMA,
     SERVICE_SCHEMA,
     RATING_SCHEMA,
@@ -58,20 +58,8 @@ from services.signals import get_cached_reviews
 from users.models import User
 
 
-@extend_schema(tags=["Measure"])
-@extend_schema_view(**MEASURE_SCHEMA)
-class MeasureViewSet(viewsets.ModelViewSet):
-    """Работа с единицами измерения услуг."""
-
-    queryset = Measure.objects.all()
-    serializer_class = MeasureSerializer
-    permission_classes = (IsAdminOrReadOnly,)
-    pagination_class = None
-    http_method_names = ('get', 'post', 'put',)
-
-
-@extend_schema(tags=["Types cleaning"])
-@extend_schema_view(**TYPES_CLEANING_SCHEMA)
+@extend_schema(tags=('Cleaning types',))
+@extend_schema_view(**CLEANING_TYPES_SCHEMA)
 class CleaningTypeViewSet(viewsets.ModelViewSet):
     """Работа с наборами услуг."""
 
@@ -87,7 +75,19 @@ class CleaningTypeViewSet(viewsets.ModelViewSet):
             return CreateCleaningTypeSerializer
 
 
-@extend_schema(tags=["Service"])
+@extend_schema(tags=('Measure',))
+@extend_schema_view(**MEASURE_SCHEMA)
+class MeasureViewSet(viewsets.ModelViewSet):
+    """Работа с единицами измерения услуг."""
+
+    queryset = Measure.objects.all()
+    serializer_class = MeasureSerializer
+    permission_classes = (IsAdminOrReadOnly,)
+    pagination_class = None
+    http_method_names = ('get', 'post', 'put', 'delete')
+
+
+@extend_schema(tags=('Service',))
 @extend_schema_view(**SERVICE_SCHEMA)
 class ServiceViewSet(viewsets.ModelViewSet):
     """Работа с услугами."""
@@ -111,7 +111,179 @@ class ServiceViewSet(viewsets.ModelViewSet):
             return CreateServiceSerializer
 
 
-@extend_schema(tags=["User"])
+@extend_schema_view(**ORDER_SCHEMA)
+class OrderViewSet(viewsets.ModelViewSet):
+    """Работа с заказами."""
+
+    http_method_names = ('get', 'post', 'put',)
+    queryset = Order.objects.select_related('user', 'address',).all()
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            self.permission_classes = (permissions.IsAuthenticated,)
+        else:
+            self.permission_classes = (IsOwnerOrAdmin,)
+        return super().get_permissions()
+
+    def get_queryset(self):
+        if not self.request.user.is_staff:
+            return self.queryset.filter(user=self.request.user)
+        else:
+            return self.queryset
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return OrderGetSerializer
+        if self.request.method in ('PATCH', 'PUT'):
+            if self.request.user.is_staff:
+                return AdminOrderPatchSerializer
+            else:
+                return OwnerOrderPatchSerializer
+        return OrderPostSerializer
+
+    @action(
+        detail=True,
+        methods=('post', 'put',),
+        url_path='rating',
+        permission_classes=(IsOwnerOrAdmin,)
+    )
+    def rating(self, request, pk):
+        """Оценить заказ."""
+        # TODO: непонятный момент. Посмотреть позже.
+        request.data['id']: int = pk
+        if request.method == 'POST':
+            serializer = OrderRatingSerializer(
+                data=request.data,
+                context={'request': request},
+            )
+        if request.method == 'PUT':
+            order: Order = get_object_or_404(Order, id=pk)
+            rating: Rating = get_object_or_404(
+                Rating, order=order, user=request.user
+            )
+            serializer: serializers = OrderRatingSerializer(
+                instance=rating,
+                data=request.data,
+                context={'request': request},
+            )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=('post',),
+        permission_classes=(IsOwnerAbleToPay,),
+        url_path='pay',
+    )
+    def pay(self, request):
+        """Оплатить заказ."""
+        order: Order = self.get_object()
+        status_code: status = status.HTTP_400_BAD_REQUEST
+        if order.order.status in (ORDER_ACCEPTED_STATUS, ORDER_FINISHED_STATUS):  # noqa (E501)
+            data_status: str = 'Заказ уже оплачен.'
+        elif order.order.status == ORDER_CANCELLED_STATUS:
+            data_status: str = 'Заказ был отменен.'
+        else:
+            order.status: str = ORDER_ACCEPTED_STATUS
+            order.save()
+            data_status: str = 'Заказ оплачен.'
+            status_code: status = status.HTTP_200_OK
+        return Response(
+            data={'status': data_status},
+            status=status_code
+        )
+
+    @action(
+        detail=False,
+        methods=('post',),
+        url_path='get_available_time',
+    )
+    def get_available_time(self, request):
+        """Получить список доступных часов для бронирования заказа."""
+        serializer: serializers = CleaningGetTimeSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(
+            data=get_available_time_json(
+                cleaning_date=serializer.validated_data['cleaning_date'],
+                total_time=serializer.validated_data['total_time'],
+            ),
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema_view(**RATING_SCHEMA)
+class RatingViewSet(viewsets.ModelViewSet):
+    """Список отзывов."""
+
+    queryset = Rating.objects.all()
+    permission_classes = (IsAdminOrReadOnly,)
+    serializer_class = RatingSerializer
+    http_method_names = ('get', 'patch',)
+    pagination_class = LimitOffsetPagination
+
+    def list(self, request, *args, **kwargs):
+        cached_reviews: list[dict] = get_cached_reviews()
+        limit: int = request.query_params.get('limit')
+        if limit and cached_reviews:
+            try:
+                cached_reviews: list[dict] = cached_reviews[:int(limit)]
+            except ValueError:
+                raise serializers.ValidationError(
+                    detail="Invalid limit value. Limit must be an integer.",
+                    code=status.HTTP_400_BAD_REQUEST
+                )
+        return Response(
+            data=cached_reviews,
+            status=status.HTTP_200_OK,
+        )
+
+    def perform_create(self, serializer):
+        order_id: int = self.kwargs.get('order_id')
+        order: Order = get_object_or_404(Order, id=order_id)
+        serializer.save(user=self.request.user, order=order)
+        return
+
+
+@extend_schema_view(**SERVICE_SCHEMA)
+class ServiceViewSet(viewsets.ModelViewSet):
+    """Работа с услугами."""
+
+    queryset = Service.objects.select_related('measure').all()
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = FilterService
+    http_method_names = ('get', 'post', 'put',)
+
+    def get_queryset(self):
+        if not self.request.user.is_staff:
+            self.pagination_class: None = None
+            return self.queryset.filter(service_type=SERVICES_ADDITIONAL)
+        else:
+            return self.queryset
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return GetServiceSerializer
+        else:
+            return CreateServiceSerializer
+
+
+@extend_schema(**TOKEN_CREATE_SCHEMA)
+class TokenCreateSchemaView(TokenCreateView):
+    pass
+
+
+@extend_schema(**TOKEN_DESTROY_SCHEMA)
+class TokenDestroySchemaView(TokenDestroyView):
+    pass
+
+
+@extend_schema(tags=('User',))
 @extend_schema_view(**USER_SCHEMA)
 class UserViewSet(viewsets.ModelViewSet):
     """Работа с пользователями."""
@@ -135,9 +307,10 @@ class UserViewSet(viewsets.ModelViewSet):
         detail=True,
         url_path='orders',
         methods=('get',),
-        permission_classes=(permissions.IsAdminUser,)
+        permission_classes=(permissions.IsAuthenticated,)
     )
     def orders(self, request, pk):
+        """Возвращает список заказов авторизированного пользователя."""
         queryset = Order.objects.filter(
             user=pk,
         ).select_related(
@@ -160,6 +333,7 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=(permissions.IsAuthenticated,)
     )
     def me(self, request):
+        """Возвращает данные авторизированного пользователя."""
         instance: User = request.user
         serializer: UserSerializer = UserSerializer(instance)
         data: ReturnDict = serializer.data
@@ -214,10 +388,9 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def confirm_password(self, request):
         """
-        Если пользователь с указанно почтой существует: проверяет возможность
-        авторизации с предоставленными данными.
-        Если пользователя не существует - проверяет валидность указанного
-        пароля и далее возможность авторизации.
+        Проверяет возможность авторизации с предоставленными данными.
+        Если пользователя с указанно почтой не существует - сначала проверяет
+        валидность указанного пароля.
         """
         serializer: serializers = PasswordConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -241,144 +414,3 @@ class UserViewSet(viewsets.ModelViewSet):
             data: dict = {'password': 'Пароль успешно подтвержден.'}
             status_code: status = status.HTTP_200_OK
         return Response(data=data, status=status_code)
-
-
-@extend_schema(tags=["Order"])
-@extend_schema_view(**ORDER_SCHEMA)
-class OrderViewSet(viewsets.ModelViewSet):
-    """Список заказов."""
-    http_method_names = ('get', 'post', 'patch', 'put',)
-    queryset = Order.objects.select_related('user', 'address',).all()
-
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            self.permission_classes = (permissions.IsAuthenticated,)
-        else:
-            self.permission_classes = (IsOwnerOrAdmin,)
-        return super().get_permissions()
-
-    def get_queryset(self):
-        if not self.request.user.is_staff:
-            return self.queryset.filter(user=self.request.user)
-        else:
-            return self.queryset
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return OrderGetSerializer
-        if self.request.method in ('PATCH', 'PUT'):
-            if self.request.user.is_staff:
-                return AdminOrderPatchSerializer
-            else:
-                return OwnerOrderPatchSerializer
-        return OrderPostSerializer
-
-    @action(
-        detail=True,
-        methods=('post', 'put',),
-        url_path='rating',
-        permission_classes=(IsOwnerOrAdmin,)
-    )
-    def rating(self, request, pk):
-        """Оценить заказ."""
-        request.data['id'] = pk
-        if request.method == 'POST':
-            serializer = OrderRatingSerializer(
-                data=request.data,
-                context={'request': request},
-            )
-        if request.method == 'PUT':
-            order = get_object_or_404(Order, id=pk)
-            rating = get_object_or_404(Rating, order=order, user=request.user)
-            serializer = OrderRatingSerializer(
-                instance=rating,
-                data=request.data,
-                context={'request': request},
-            )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(
-        detail=True,
-        methods=('post',),
-        permission_classes=(IsOwnerAbleToPay,),
-        url_path='pay',
-    )
-    def pay(self, request, pk):
-        """Оплатить заказ."""
-        serializer: serializers = self.__modify_order(
-            order_id=pk,
-            request=request,
-            serializer_class=PaySerializer,
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(
-        detail=False,
-        methods=('post',),
-        url_path='get_available_time',
-    )
-    def get_available_time(self, request):
-        serializer = CleaningGetTimeSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        return Response(
-            data=get_available_time_json(
-                cleaning_date=serializer.validated_data['cleaning_date'],
-                total_time=serializer.validated_data['total_time'],
-            ),
-            status=status.HTTP_200_OK,
-        )
-
-    def __modify_order(
-            self,
-            order_id,
-            request: HttpRequest,
-            serializer_class: serializers,
-            ) -> serializers:  # noqa (E123)
-        order = get_object_or_404(Order, id=order_id)
-        request.data['id'] = order.id
-        serializer = serializer_class(
-            order,
-            request.data,
-            context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return serializer
-
-
-@extend_schema(tags=["Rating"])
-@extend_schema_view(**RATING_SCHEMA)
-class RatingViewSet(viewsets.ModelViewSet):
-    """Список отзывов."""
-    queryset = Rating.objects.all()
-    permission_classes = (IsAdminOrReadOnly,)
-    serializer_class = RatingSerializer
-    http_method_names = ('get', 'patch',)
-    pagination_class = LimitOffsetPagination
-
-    def list(self, request, *args, **kwargs):
-        cached_reviews: list[dict] = get_cached_reviews()
-        limit: int = request.query_params.get('limit')
-        if limit and cached_reviews:
-            try:
-                cached_reviews: list[dict] = cached_reviews[:int(limit)]
-            except ValueError:
-                raise serializers.ValidationError(
-                    detail="Invalid limit value. Limit must be an integer.",
-                    code=status.HTTP_400_BAD_REQUEST
-                )
-        return Response(
-            data=cached_reviews,
-            status=status.HTTP_200_OK,
-        )
-
-    def perform_create(self, serializer):
-        order_id = self.kwargs.get('order_id')
-        order = get_object_or_404(Order, id=order_id)
-        serializer.save(user=self.request.user, order=order)
-        return

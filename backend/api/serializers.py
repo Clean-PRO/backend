@@ -1,16 +1,21 @@
 import random
 import re
 from datetime import datetime
-from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerializer  # noqa (E501)
 
+from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerializer  # noqa (E501)
 from django.db import transaction
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 from drf_base64.fields import Base64ImageField
+from drf_spectacular.utils import extend_schema_serializer
 from phonenumber_field.phonenumber import PhoneNumber
 from rest_framework import serializers, status
 from rest_framework.validators import UniqueValidator
 
+from api.schemas_serializer import (
+    ORDER_POST_SERIALIZER_SCHEMA, ORDER_RATING_SERIALIZER_SCHEMA,
+    RATING_SERIALIZER_SCHEMA,
+)
 from api.utils import (
     get_or_create_address, get_available_cleaners,
 )
@@ -324,6 +329,7 @@ class OrderGetSerializer(serializers.ModelSerializer):
         )
 
 
+@extend_schema_serializer(**ORDER_POST_SERIALIZER_SCHEMA)
 class OrderPostSerializer(serializers.ModelSerializer):
     """Сериализатор для создания заказа."""
 
@@ -528,7 +534,8 @@ class OwnerOrderPatchSerializer(serializers.ModelSerializer):
                 'Среди указанных полей нет ни '
                 'одного разрешенного для редактирования.')
         if (data.get('order_status') and
-                not data.get('order_status') == ORDER_CANCELLED_STATUS):
+                not data.get('order_status') == ORDER_CANCELLED_STATUS
+                ):  # noqa (E124)
             raise serializers.ValidationError(
                 'Вы можете установить только статус отмены заказа.')
         return data
@@ -537,8 +544,8 @@ class OwnerOrderPatchSerializer(serializers.ModelSerializer):
         super().update(instance, validated_data)
         if 'comment_cancel' in validated_data:
             instance.order_status = 'cancelled'
-            instance.cancel_date = datetime.today().date()
-            instance.cancel_time = datetime.today().time()
+            instance.cancel_date: datetime = datetime.today().date()
+            instance.cancel_time: datetime = datetime.today().time()
         instance.save()
         return instance
 
@@ -582,37 +589,7 @@ class AdminOrderPatchSerializer(OwnerOrderPatchSerializer):
         return instance
 
 
-class PaySerializer(serializers.ModelSerializer):
-    """Сериализатор для оплаты заказа."""
-
-    class Meta:
-        model = Order
-        fields = ('pay_status',)
-
-    def validate(self, data):
-        # TODO: аннотация типов желательна.
-        # REPLE: Пока не до аннотации.
-        request = self.context.get('request')
-        user = request.user
-        order_id = request.data.get('id',)
-        order = get_object_or_404(Order, id=order_id)
-        if order.user is not user:
-            raise serializers.ValidationError(
-                'Попытка оплатить чужой заказ. Оплата не возможна.')
-        if order.pay_status:
-            raise serializers.ValidationError(
-                'Заказ уже оплачен. Повторная оплата не возможна.')
-        if order.order_status == ORDER_CANCELLED_STATUS:
-            raise serializers.ValidationError(
-                'Заказ Отменен. Оплата не возможна.')
-        return data
-
-    def update(self, instance, validated_data):
-        instance.pay_status = True
-        instance.save()
-        return instance
-
-
+@extend_schema_serializer(**RATING_SERIALIZER_SCHEMA)
 class RatingSerializer(serializers.ModelSerializer):
     """
     Сериализатор для представления отзыва на уборку на главной странице.
@@ -637,22 +614,24 @@ class RatingSerializer(serializers.ModelSerializer):
         )
 
     def to_representation(self, instance):
-        data: dict = super().to_representation(instance)
+        data: dict[str, any] = super().to_representation(instance)
         for field in ('user', 'order'):
             data.pop(field, None)
         return data
 
 
+@extend_schema_serializer(**ORDER_RATING_SERIALIZER_SCHEMA)
 class OrderRatingSerializer(RatingSerializer):
     """
     Сериализатор для создания/изменения отзыва на уборку в приложении.
     """
 
+    # TODO: излишний код валидации, посмотреть позже.
     def validate(self, data):
-        request = self.context.get('request')
-        user = request.user
-        order_id = request.data.get('id',)
-        order = get_object_or_404(Order, id=order_id)
+        request: dict[str, any] = self.context.get('request')
+        user: User = request.user
+        order_id: int = request.data.get('id',)
+        order: Order = get_object_or_404(Order, id=order_id)
         if order.order_status != 'finished':
             raise serializers.ValidationError(
                 'Изменить отзыв на незавершенный заказ невозможно.')
@@ -661,12 +640,13 @@ class OrderRatingSerializer(RatingSerializer):
                 'Отзыв на этот заказ вы уже оставляли.')
         return data
 
+    # TODO: излишний код создания, посмотреть позже.
     def create(self, validated_data):
-        request = self.context.get('request')
-        order_id = request.data.get('id',)
-        order = get_object_or_404(Order, id=order_id)
-        rating = super().create(validated_data)
-        rating.user = request.user
-        rating.order = order
+        request: dict[str, any] = self.context.get('request')
+        order_id: int = request.data.get('id',)
+        order: Order = get_object_or_404(Order, id=order_id)
+        rating: Rating = super().create(validated_data)
+        rating.user: User = request.user
+        rating.order: Order = order
         rating.save()
         return rating

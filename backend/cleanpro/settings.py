@@ -92,10 +92,8 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Cleanpro API",
     "VERSION": "0.0.1",
     "SERVE_INCLUDE_SCHEMA": False,
-    "SWAGGER_UI_SETTINGS": {
-        "filter": True,
-    },
-    "COMPONENT_SPLIT_REQUEST": True
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": r'/api/',
 }
 
 ROOT_URLCONF = 'cleanpro.urls'
