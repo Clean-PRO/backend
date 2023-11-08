@@ -228,19 +228,8 @@ class RatingViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         cached_reviews: list[dict] = get_cached_reviews()
-        limit: int = request.query_params.get('limit')
-        if limit and cached_reviews:
-            try:
-                cached_reviews: list[dict] = cached_reviews[:int(limit)]
-            except ValueError:
-                raise serializers.ValidationError(
-                    detail="Invalid limit value. Limit must be an integer.",
-                    code=status.HTTP_400_BAD_REQUEST
-                )
-        return Response(
-            data=cached_reviews,
-            status=status.HTTP_200_OK,
-        )
+        page = self.paginate_queryset(cached_reviews)
+        return Response(page)
 
     def perform_create(self, serializer):
         order_id: int = self.kwargs.get('order_id')
