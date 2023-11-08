@@ -58,7 +58,6 @@ from services.signals import get_cached_reviews
 from users.models import User
 
 
-@extend_schema(tags=('Cleaning types',))
 @extend_schema_view(**CLEANING_TYPES_SCHEMA)
 class CleaningTypeViewSet(viewsets.ModelViewSet):
     """Работа с наборами услуг."""
@@ -75,7 +74,6 @@ class CleaningTypeViewSet(viewsets.ModelViewSet):
             return CreateCleaningTypeSerializer
 
 
-@extend_schema(tags=('Measure',))
 @extend_schema_view(**MEASURE_SCHEMA)
 class MeasureViewSet(viewsets.ModelViewSet):
     """Работа с единицами измерения услуг."""
@@ -213,7 +211,7 @@ class RatingViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user, order=order)
         return
 
-@extend_schema(tags=('Service',))
+
 @extend_schema_view(**SERVICE_SCHEMA)
 class ServiceViewSet(viewsets.ModelViewSet):
     """Работа с услугами."""
@@ -248,7 +246,6 @@ class TokenDestroySchemaView(TokenDestroyView):
     pass
 
 
-@extend_schema(tags=('User',))
 @extend_schema_view(**USER_SCHEMA)
 class UserViewSet(viewsets.ModelViewSet):
     """Работа с пользователями."""
