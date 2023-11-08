@@ -63,8 +63,8 @@
 ##########################################################################
 
 
-@admin_token = df48c6ad750ace3858d92db56113f142a65e4450
-@token = df48c6ad750ace3858d92db56113f142a65e4450
+@admin_token = admin_token_value
+@user_token = user_token_value
 
 
 ##########################################################################
@@ -72,16 +72,16 @@
 ##########################################################################
 
 
-@login = http://127.0.0.1:80/api/auth/token/login/
-@logout = http://127.0.0.1:80/api/auth/token/logout/
+@login = http://127.0.0.1:8000/api/auth/token/login/
+@logout = http://127.0.0.1:8000/api/auth/token/logout/
 
-@measures = http://127.0.0.1:80/api/measure/
+@measures = http://127.0.0.1:8000/api/measure/
 
-@orders = http://127.0.0.1:80/api/orders/
+@orders = http://127.0.0.1:8000/api/orders/
 
-@ratings = http://127.0.0.1:80/api/ratings/
+@ratings = http://127.0.0.1:8000/api/ratings/
 
-@users = http://127.0.0.1:80/api/users/
+@users = http://127.0.0.1:8000/api/users/
 
 
 ##########################################################################
@@ -89,21 +89,19 @@
 ##########################################################################
 
 
-# TODO: документация также требует доработки
-
 ###
 POST {{login}} HTTP/1.1
 Content-Type: application/json
 
 {
-  "email": "myemail@email.com",
-  "password": "hX1^tW3#"
+  "email": "admin@email.com",
+  "password": "admin"
 }
 
 ###
 POST {{logout}} HTTP/1.1
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 
 ###
 POST {{login}} HTTP/1.1
@@ -123,6 +121,7 @@ Content-Type: application/json
     "password": "MyPass!1"
 }
 
+
 ##########################################################################
 ################################# MEASURE ################################
 ##########################################################################
@@ -130,19 +129,19 @@ Content-Type: application/json
 
 ### 
 GET {{measures}} HTTP/1.1
-# Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 
 ### 
 GET {{measures}}1/ HTTP/1.1
-# Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 
 
 ###
 POST {{measures}} HTTP/1.1
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-# Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 Content-Type: application/json
 
 {
@@ -151,18 +150,18 @@ Content-Type: application/json
 
 ### 
 DELETE {{measures}}5/ HTTP/1.1
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-# Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 
 ### 
 PATCH {{measures}}5/ HTTP/1.1
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-# Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 
 ### 
 PUT {{measures}}5/ HTTP/1.1
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-# Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 Content-Type: application/json
 
 {
@@ -177,18 +176,18 @@ Content-Type: application/json
 
 ### 
 GET {{orders}} HTTP/1.1
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-# Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 
 ### 
 GET {{orders}}4/ HTTP/1.1
-# Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 
 ### 
 POST {{orders}}4/rating/ HTTP/1.1
-# Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 Content-Type: application/json
 
 {
@@ -198,14 +197,14 @@ Content-Type: application/json
 
 ### 
 PATCH {{orders}}4/ HTTP/1.1
-# Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 
 
 ###
 PATCH {{orders}}4/ HTTP/1.1
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-# Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 Content-Type: application/json
 
 {
@@ -219,40 +218,41 @@ Content-Type: application/json
 ###
 POST {{orders}} HTTP/1.1
 Content-Type: application/json
-Authorization: Token 9afce82315d74a86c4bec2b1fab315786daadb0a
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 
 {
-    "user": {
-        "username": "Кирилл",
-        "email": "myemail@email.com",
-        "phone": "+7 777 777 77 77"
-    },
-    "comment": "Que paso, amigo? ;)",
-    "total_sum": 1000000,
-    "total_time": 80,
-    "cleaning_type": "1",
-    "services": [
-        {
-            "id": 1,
-            "amount": 2
-        },
-        {
-            "id": 3,
-            "amount": 1
-        }
-    ],
-    "rooms_number": 1,
-    "bathrooms_number": 3,
-    "address": {
-        "city": 11,
-        "street": 11,
-        "house": 15,
-        "entrance": 15,
-        "floor": 15,
-        "apartment": 15
-    },
-    "cleaning_date": "2023-11-12",
-    "cleaning_time": "01:30"
+  "user": {
+      "username": "Кирилл",
+      "email": "myemail@email.com",
+      "phone": "+7 777 777 77 77"
+  },
+  "comment": "Que paso, amigo? ;)",
+  "total_sum": 1000000,
+  "total_time": 80,
+  "cleaning_type": "1",
+  "services": [
+      {
+          "id": 1,
+          "amount": 2
+      },
+      {
+          "id": 3,
+          "amount": 1
+      }
+  ],
+  "rooms_number": 1,
+  "bathrooms_number": 3,
+  "address": {
+      "city": 11,
+      "street": 11,
+      "house": 15,
+      "entrance": 15,
+      "floor": 15,
+      "apartment": 15
+  },
+  "cleaning_date": "2023-11-12",
+  "cleaning_time": "21:30"
 }
 
 ###
@@ -266,13 +266,14 @@ Content-Type: application/json
 
 ###
 DELETE {{orders}}4/ HTTP/1.1
-# Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 
 
 ##########################################################################
 ################################# RATINGS ################################
 ##########################################################################
+
 
 ###
 GET {{ratings}} HTTP/1.1
@@ -282,21 +283,29 @@ GET {{ratings}}?limit=2 HTTP/1.1
 
 ###
 PATCH {{ratings}}4/ HTTP/1.1
-# Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 Content-Type: application/json
 
 {
     "score": 5
 }
 
+
+##########################################################################
+################################## USERS #################################
+##########################################################################
+
+
 ### 
 GET {{users}} HTTP/1.1
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 
 ###
 PUT {{users}}1/ HTTP/1.1
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
 Content-Type: application/json
 
 {
@@ -313,9 +322,12 @@ Content-Type: application/json
     }
 }
 
+
 ### 
 GET {{users}}me/ HTTP/1.1
-Authorization: Token df48c6ad750ace3858d92db56113f142a65e4450
+Authorization: Token admin_token_value
+# Authorization: Token user_token_value
+
 
 ### 
 POST {{users}}confirm_email/ HTTP/1.1
@@ -335,11 +347,6 @@ Content-Type: application/json
   "password": "hX1^tW3#"
 }
 
-
-
-##########################################################################
-################################# RATINGS ################################
-##########################################################################
 
 ###
 POST {{users}} HTTP/1.1
