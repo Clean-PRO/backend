@@ -264,7 +264,13 @@ class Order(models.Model):
     )
 
     class Meta:
-        ordering = ('-cleaning_date',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=('address', 'cleaning_date', 'cleaning_time'),
+                name='unique_address_cleaning',
+            ),
+        ]
+        ordering = ('-cleaning_date', '-cleaning_time',)
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
 
@@ -365,10 +371,12 @@ class Rating(models.Model):
     )
 
     class Meta:
-        constraints = [models.UniqueConstraint(
-            fields=('user', 'order'),
-            name='unique_user_order_rating'
-        )]
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'order'),
+                name='unique_user_order_rating',
+            ),
+        ]
         ordering = ('-id',)
         verbose_name = 'Отзыв заказа'
         verbose_name_plural = 'Отзывы заказов'
