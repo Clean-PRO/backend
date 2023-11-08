@@ -143,7 +143,6 @@ class User(AbstractUser):
     phone = PhoneNumberField(
         verbose_name='Номер телефона',
         region='RU',
-        unique=True,
         blank=True,
         null=True,
     )
