@@ -63,7 +63,7 @@
 ##########################################################################
 
 
-@admin_token = admin_token_value
+@admin_token = 804ce40775ec9bcea9789ccc402babab33fbf493
 @user_token = user_token_value
 
 
@@ -72,16 +72,16 @@
 ##########################################################################
 
 
-@login = http://127.0.0.1:8000/api/auth/token/login/
-@logout = http://127.0.0.1:8000/api/auth/token/logout/
+@login = http://localhost/api/auth/token/login/
+@logout = http://localhost/api/auth/token/logout/
 
-@measures = http://127.0.0.1:8000/api/measure/
+@measures = http://localhost/api/measure/
 
-@orders = http://127.0.0.1:8000/api/orders/
+@orders = http://localhost/api/orders/
 
-@ratings = http://127.0.0.1:8000/api/ratings/
+@ratings = http://localhost/api/ratings/
 
-@users = http://127.0.0.1:8000/api/users/
+@users = http://localhost/api/users/
 
 
 ##########################################################################
@@ -100,7 +100,7 @@ Content-Type: application/json
 
 ###
 POST {{logout}} HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 
 ###
@@ -108,8 +108,8 @@ POST {{login}} HTTP/1.1
 Content-Type: application/json
 
 {
-    "email": "newuser@email.com",
-    "password": "MyPass!1"
+  "email": "newuser@email.com",
+  "password": "MyPass!1"
 }
 
 ###
@@ -117,8 +117,8 @@ POST {{users}} HTTP/1.1
 Content-Type: application/json
 
 {
-    "email": "newuser@email.com",
-    "password": "MyPass!1"
+  "email": "newuser@email.com",
+  "password": "MyPass!1"
 }
 
 
@@ -129,18 +129,18 @@ Content-Type: application/json
 
 ### 
 GET {{measures}} HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 
 ### 
 GET {{measures}}1/ HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 
 
 ###
 POST {{measures}} HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 Content-Type: application/json
 
@@ -150,17 +150,17 @@ Content-Type: application/json
 
 ### 
 DELETE {{measures}}5/ HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 
 ### 
 PATCH {{measures}}5/ HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 
 ### 
 PUT {{measures}}5/ HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 Content-Type: application/json
 
@@ -176,17 +176,17 @@ Content-Type: application/json
 
 ### 
 GET {{orders}} HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 
 ### 
 GET {{orders}}4/ HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 
 ### 
 POST {{orders}}4/rating/ HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 Content-Type: application/json
 
@@ -197,28 +197,28 @@ Content-Type: application/json
 
 ### 
 PATCH {{orders}}4/ HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 
 
 ###
 PATCH {{orders}}4/ HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 Content-Type: application/json
 
 {
-    "comment_cancel": "Ну просто",
-    "pay_status": "True",
-    "comment": "Коммент",
-    "cleaning_date": "2023-11-13",
-    "cleaning_time": "02:30"
+  "comment_cancel": "Ну просто",
+  "pay_status": "True",
+  "comment": "Коммент",
+  "cleaning_date": "2023-11-13",
+  "cleaning_time": "02:30"
 }
 
 ###
 POST {{orders}} HTTP/1.1
 Content-Type: application/json
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 
 {
@@ -266,7 +266,7 @@ Content-Type: application/json
 
 ###
 DELETE {{orders}}4/ HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 
 
@@ -283,12 +283,12 @@ GET {{ratings}}?limit=2 HTTP/1.1
 
 ###
 PATCH {{ratings}}4/ HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 Content-Type: application/json
 
 {
-    "score": 5
+  "score": 5
 }
 
 
@@ -299,33 +299,33 @@ Content-Type: application/json
 
 ### 
 GET {{users}} HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 
 ###
 PUT {{users}}1/ HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 Content-Type: application/json
 
 {
-    "username": "Супер администратор",
-    "email": "admin@email.com",
-    "phone": "+79991112233",
-    "address": {
-        "city": "Москва",
-        "street": "Питерская",
-        "house": 14,
-        "entrance": 1,
-        "floor": 150,
-        "apartment": 999
-    }
+  "username": "Супер администратор",
+  "email": "admin@email.com",
+  "phone": "+79991112233",
+  "address": {
+      "city": "Москва",
+      "street": "Питерская",
+      "house": 14,
+      "entrance": 1,
+      "floor": 150,
+      "apartment": 999
+  }
 }
 
 
 ### 
 GET {{users}}me/ HTTP/1.1
-Authorization: Token admin_token_value
+Authorization: Token 804ce40775ec9bcea9789ccc402babab33fbf493
 # Authorization: Token user_token_value
 
 
@@ -363,6 +363,6 @@ POST {{users}} HTTP/1.1
 Content-Type: application/json
 
 {
-    "email": "newusers@email.com",
-    "password": "MyPass!1"
+  "email": "newusers@email.com",
+  "password": "MyPass!1"
 }

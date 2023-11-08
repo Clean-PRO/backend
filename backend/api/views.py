@@ -87,30 +87,6 @@ class MeasureViewSet(viewsets.ModelViewSet):
     http_method_names = ('get', 'post', 'put', 'delete')
 
 
-@extend_schema(tags=('Service',))
-@extend_schema_view(**SERVICE_SCHEMA)
-class ServiceViewSet(viewsets.ModelViewSet):
-    """Работа с услугами."""
-
-    queryset = Service.objects.select_related('measure').all()
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (filters.DjangoFilterBackend,)
-    filterset_class = FilterService
-    http_method_names = ('get', 'post', 'put',)
-
-    def get_queryset(self):
-        if not self.request.user.is_staff:
-            return self.queryset.filter(service_type=SERVICES_ADDITIONAL)
-        else:
-            return self.queryset
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return GetServiceSerializer
-        else:
-            return CreateServiceSerializer
-
-
 @extend_schema_view(**ORDER_SCHEMA)
 class OrderViewSet(viewsets.ModelViewSet):
     """Работа с заказами."""
@@ -237,7 +213,7 @@ class RatingViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user, order=order)
         return
 
-
+@extend_schema(tags=('Service',))
 @extend_schema_view(**SERVICE_SCHEMA)
 class ServiceViewSet(viewsets.ModelViewSet):
     """Работа с услугами."""
