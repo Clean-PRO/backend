@@ -1,7 +1,5 @@
 # TODO: при релизе проверить, что валидация на клиенте
 #       совпадает с валидацией на сервере!
-import secrets
-import string
 
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
@@ -9,31 +7,15 @@ from django.core.validators import MaxValueValidator
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
+from cleanpro.app_data import (
+    ADDRESS_CITY_MAX_LEN, ADDRESS_STREET_MAX_LEN, ADDRESS_HOUSE_MAX_VAL,
+    ADDRESS_ENTRANCE_MAX_VAL, ADDRESS_FLOOR_MAX_VAL, ADDRESS_APARTMENT_MAX_VAL,
+    USER_NAME_MAX_LEN, USER_PASS_MAX_LEN,
+    USER_FULL_EMAIL_MAX_LEN,
+)
 from users.validators import (
     validate_email, validate_username, validate_password
 )
-
-ADDRESS_CITY_MAX_LEN: int = 50
-ADDRESS_STREET_MAX_LEN: int = 50
-ADDRESS_HOUSE_MAX_VAL: int = 999
-ADDRESS_ENTRANCE_MAX_VAL: int = 50
-ADDRESS_FLOOR_MAX_VAL: int = 150
-ADDRESS_APARTMENT_MAX_VAL: int = 9999
-
-USER_NAME_MAX_LEN: int = 30
-# Do not change, Django hash password with big length!
-USER_PASS_MAX_LEN: int = 512
-USER_PASS_RAND_MAX_LEN: int = 10
-USER_FULL_EMAIL_MAX_LEN: int = 80
-
-
-def generate_random_password():
-    characters = string.ascii_letters + string.digits + '!_@#$%^&+='
-    password = ''.join(
-        secrets.choice(characters) for
-        _ in range(USER_PASS_RAND_MAX_LEN)
-    )
-    return password
 
 
 class Address(models.Model):
@@ -144,6 +126,8 @@ class User(AbstractUser):
         verbose_name='Имя пользователя',
         max_length=USER_NAME_MAX_LEN,
         validators=(validate_username,),
+        blank=True,
+        null=True,
     )
     email = models.EmailField(
         verbose_name='Адрес электронной почты',
@@ -160,6 +144,8 @@ class User(AbstractUser):
         verbose_name='Номер телефона',
         region='RU',
         unique=True,
+        blank=True,
+        null=True,
     )
     address = models.ForeignKey(
         Address,
@@ -169,7 +155,7 @@ class User(AbstractUser):
         blank=True,
         null=True,
     )
-    # INFO: следующие 3 поля нужны для учетной записи уборщиков.
+    # INFO: следующие 3 атрибута нужны для учетной записи уборщиков.
     is_cleaner = models.BooleanField(
         verbose_name='Уборщик',
         default=False,
