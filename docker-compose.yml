@@ -43,7 +43,7 @@ services:
       context: ./gateway
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "80:8000"
     volumes:
       - static_cs:/var/html/static/
       - media_cs:/var/html/media/
