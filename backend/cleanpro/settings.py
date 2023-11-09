@@ -90,7 +90,7 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Cleanpro API",
-    "VERSION": "0.0.1",
+    "VERSION": "0.5.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": r'/api/',
