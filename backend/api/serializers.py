@@ -518,6 +518,9 @@ class OrderPostSerializer(serializers.ModelSerializer):
 class OwnerOrderPatchSerializer(serializers.ModelSerializer):
     """Сериализатор для частичного изменения данных заказа владельцем."""
 
+    cleaning_date = serializers.DateField(required=False)
+    cleaning_time = serializers.TimeField(required=False)
+
     class Meta:
         model = Order
         fields = (
@@ -529,15 +532,14 @@ class OwnerOrderPatchSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        if not data:
+        if not data.get('order_status') == ORDER_CANCELLED_STATUS:
             raise serializers.ValidationError(
-                'Среди указанных полей нет ни '
-                'одного разрешенного для редактирования.')
-        if (data.get('order_status') and
-                not data.get('order_status') == ORDER_CANCELLED_STATUS
-                ):  # noqa (E124)
-            raise serializers.ValidationError(
-                'Вы можете установить только статус отмены заказа.')
+                {
+                    'order_status': (
+                        'Вы можете установить только статус отмены заказа.'
+                    ),
+                },
+            )
         return data
 
     def update(self, instance, validated_data):
@@ -551,13 +553,16 @@ class OwnerOrderPatchSerializer(serializers.ModelSerializer):
 
     def to_representation(self, value):
         return OrderGetSerializer(
-            value,
+            instance=value,
             context={'request': self.context.get('request',)}
         ).data
 
 
 class AdminOrderPatchSerializer(OwnerOrderPatchSerializer):
     """Сериализатор для частичного изменения данных заказа админом."""
+
+    cleaning_date = serializers.DateField(required=False)
+    cleaning_time = serializers.TimeField(required=False)
 
     class Meta:
         model = Order
@@ -569,13 +574,6 @@ class AdminOrderPatchSerializer(OwnerOrderPatchSerializer):
             'cleaning_date',
             'cleaning_time',
         )
-
-    def validate(self, data):
-        if not data:
-            raise serializers.ValidationError(
-                'Среди указанных полей нет ни '
-                'одного разрешенного для редактирования.')
-        return data
 
     def update(self, instance, validated_data):
         super().update(instance, validated_data)
@@ -634,10 +632,20 @@ class OrderRatingSerializer(RatingSerializer):
         order: Order = get_object_or_404(Order, id=order_id)
         if order.order_status != 'finished':
             raise serializers.ValidationError(
-                'Изменить отзыв на незавершенный заказ невозможно.')
+                {
+                    'order_status': (
+                        'Оставить отзыв на незавершенный заказ невозможно.'
+                    ),
+                },
+            )
         if Rating.objects.filter(order=order, user=user).exists():
             raise serializers.ValidationError(
-                'Отзыв на этот заказ вы уже оставляли.')
+                {
+                    'rating_exists': (
+                        'Отзыв на этот заказ уже существует.'
+                    ),
+                },
+            )
         return data
 
     # TODO: излишний код создания, посмотреть позже.
