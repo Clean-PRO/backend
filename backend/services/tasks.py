@@ -5,7 +5,7 @@
 from datetime import datetime, timedelta
 import requests
 
-from bs4 import BeautifulSoup, ResultSet
+from bs4 import BeautifulSoup
 from bs4.element import Tag, ResultSet
 from celery import shared_task
 from django.core.exceptions import ValidationError
