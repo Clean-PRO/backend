@@ -1,24 +1,32 @@
 import random
 import re
 from datetime import datetime
-from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerializer  # noqa (E501)
 
+from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerializer  # noqa (E501)
 from django.db import transaction
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 from drf_base64.fields import Base64ImageField
+from drf_spectacular.utils import extend_schema_serializer
 from phonenumber_field.phonenumber import PhoneNumber
 from rest_framework import serializers, status
+from rest_framework.validators import UniqueValidator
 
-from api.utils import get_or_create_address, get_available_cleaners
+from api.schemas_serializer import (
+    ORDER_POST_SERIALIZER_SCHEMA, ORDER_RATING_SERIALIZER_SCHEMA,
+    RATING_SERIALIZER_SCHEMA,
+)
+from api.utils import (
+    get_or_create_address, get_available_cleaners,
+)
 from cleanpro.app_data import ORDER_CANCELLED_STATUS
 from services.models import (
     Address, CleaningType, Measure, Order, Rating, Service, ServicesInOrder
 )
-from users.models import User, generate_random_password
+from users.models import User
 from users.validators import (
     ValidationError,
-    validate_email,
+    validate_email, validate_password,
     EMAIL_PATTERN, USERNAME_PATTERN
 )
 
@@ -46,19 +54,8 @@ class CleaningGetTimeSerializer(serializers.Serializer):
     total_time = serializers.IntegerField()
 
 
-class UserCreateSerializer(DjoserUserCreateSerializer):
-    """Сериализатор для регистрации пользователей."""
-
-    class Meta:
-        model = User
-        fields = (
-            'email',
-            'password',
-        )
-
-
-class UserGetSerializer(serializers.ModelSerializer):
-    """Сериализатор для предоставления пользователей."""
+class UserSerializer(serializers.ModelSerializer):
+    """Сериализатор пользователей."""
     address = AddressSerializer()
 
     class Meta:
@@ -82,8 +79,31 @@ class UserGetSerializer(serializers.ModelSerializer):
         return instance
 
 
-class EmailConfirmSerializer(serializers.Serializer):
-    """Подтвердить электронную почту."""
+class UserRegisterSerializer(DjoserUserCreateSerializer):
+    """Сериализатор для регистрации пользователей."""
+
+    email = serializers.CharField(
+        validators=[
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message=(
+                    'Пользователь с таким адресом электронной почты '
+                    'уже зарегистрирован.'
+                ),
+            ),
+        ],
+    )
+
+    class Meta:
+        model = User
+        fields = (
+            'email',
+            'password',
+        )
+
+
+class EmailVerifySerializer(serializers.Serializer):
+    """Сериализатор проверки корректности email."""
 
     email = serializers.EmailField()
 
@@ -91,6 +111,44 @@ class EmailConfirmSerializer(serializers.Serializer):
         """Производит валидацию поля email."""
         try:
             validate_email(value)
+        except ValidationError as err:
+            raise serializers.ValidationError(
+                detail=err,
+                code=status.HTTP_400_BAD_REQUEST,
+            )
+        return value
+
+
+class PasswordConfirmSerializer(serializers.ModelSerializer):
+    """Сериализатор проверки корректности email и password."""
+
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'username',
+            'email',
+            'phone',
+            'password',
+        )
+
+    def validate_email(self, value):
+        """Производит валидацию поля email."""
+        try:
+            validate_email(value)
+        except ValidationError as err:
+            raise serializers.ValidationError(
+                detail=err,
+                code=status.HTTP_400_BAD_REQUEST,
+            )
+        return value
+
+    def validate_password(self, value):
+        """Производит валидацию поля password."""
+        try:
+            validate_password(value)
         except ValidationError as err:
             raise serializers.ValidationError(
                 detail=err,
@@ -239,7 +297,7 @@ class ServicesInOrderSerializer(serializers.ModelSerializer):
 class OrderGetSerializer(serializers.ModelSerializer):
     """Сериализатор для представления заказа."""
 
-    user = UserGetSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     address = AddressSerializer(read_only=True)
     cleaning_type = GetCleaningTypeSerializer(read_only=True)
     services = ServicesInOrderSerializer(
@@ -271,6 +329,7 @@ class OrderGetSerializer(serializers.ModelSerializer):
         )
 
 
+@extend_schema_serializer(**ORDER_POST_SERIALIZER_SCHEMA)
 class OrderPostSerializer(serializers.ModelSerializer):
     """Сериализатор для создания заказа."""
 
@@ -303,6 +362,7 @@ class OrderPostSerializer(serializers.ModelSerializer):
             'cleaning_time',
         )
 
+    # TODO: сделать валидацию данных номера телефона и email
     def validate_user(self, user_data):
         """Производит валидацию данных о пользователе."""
         invalid_data: list[str] = []
@@ -352,28 +412,23 @@ class OrderPostSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, data):
-        """Создает новый заказ.
+        """
+        Создает новый заказ.
         Если пользователь отсутствует в базе данных - создает нового.
-        Если адрес отсутствует в базе данных - создает новый."""
+        Если адрес отсутствует в базе данных - создает новый.
+        Если заказ уже был создан - возвращает ошибку 400.
+        """
         random_cleaner: User = self.__get_random_cleaner(data=data)
         address: Address = get_or_create_address(
             address_data=data.get('address')
         )
-        user_data = data.get('user', {})
-        user: QuerySet = User.objects.filter(email=user_data.get('email'))
-        if user:
-            user: User = user.first()
-            self.__check_user_data(
-                address=address, user=user, user_data=user_data
-            )
-        else:
-            user: User = self.__create_new_user(
-                user_data=user_data,
-                address=address
-            )
+        user_data: dict[str, str] = data.get('user', {})
+        user: User = self.context['request'].user
+        self.__check_user_data(
+            address=address, user=user, user_data=user_data
+        )
         order, is_created = Order.objects.get_or_create(
             user=user,
-            cleaner=random_cleaner,
             total_sum=data.get('total_sum'),
             total_time=data.get('total_time'),
             comment=data.get('comment'),
@@ -388,6 +443,8 @@ class OrderPostSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"Статус": "Заказ уже был создан."}
             )
+        order.cleaner: User = random_cleaner
+        order.save()
         self.__services_bulk_create(order, data.get('services'))
         return order
 
@@ -410,19 +467,6 @@ class OrderPostSerializer(serializers.ModelSerializer):
         user.address = address if user.address is None else user.address
         user.save()
         return
-
-    def __create_new_user(self, user_data, address: Address) -> User:
-        """Создает нового пользователя."""
-        new_user: User = User.objects.create(
-            username=user_data.get('username'),
-            email=user_data.get('email'),
-            phone=user_data.get('phone'),
-        )
-        password: str = generate_random_password()
-        new_user.set_password(password)
-        new_user.address: Address = address
-        new_user.save()
-        return new_user
 
     def __get_random_cleaner(self, data) -> User:
         """
@@ -474,6 +518,9 @@ class OrderPostSerializer(serializers.ModelSerializer):
 class OwnerOrderPatchSerializer(serializers.ModelSerializer):
     """Сериализатор для частичного изменения данных заказа владельцем."""
 
+    cleaning_date = serializers.DateField(required=False)
+    cleaning_time = serializers.TimeField(required=False)
+
     class Meta:
         model = Order
         fields = (
@@ -485,34 +532,37 @@ class OwnerOrderPatchSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        if not data:
+        if not data.get('order_status') == ORDER_CANCELLED_STATUS:
             raise serializers.ValidationError(
-                'Среди указанных полей нет ни '
-                'одного разрешенного для редактирования.')
-        if (data.get('order_status') and
-                not data.get('order_status') == ORDER_CANCELLED_STATUS):
-            raise serializers.ValidationError(
-                'Вы можете установить только статус отмены заказа.')
+                {
+                    'order_status': (
+                        'Вы можете установить только статус отмены заказа.'
+                    ),
+                },
+            )
         return data
 
     def update(self, instance, validated_data):
         super().update(instance, validated_data)
         if 'comment_cancel' in validated_data:
             instance.order_status = 'cancelled'
-            instance.cancel_date = datetime.today().date()
-            instance.cancel_time = datetime.today().time()
+            instance.cancel_date: datetime = datetime.today().date()
+            instance.cancel_time: datetime = datetime.today().time()
         instance.save()
         return instance
 
     def to_representation(self, value):
         return OrderGetSerializer(
-            value,
+            instance=value,
             context={'request': self.context.get('request',)}
         ).data
 
 
 class AdminOrderPatchSerializer(OwnerOrderPatchSerializer):
     """Сериализатор для частичного изменения данных заказа админом."""
+
+    cleaning_date = serializers.DateField(required=False)
+    cleaning_time = serializers.TimeField(required=False)
 
     class Meta:
         model = Order
@@ -524,13 +574,6 @@ class AdminOrderPatchSerializer(OwnerOrderPatchSerializer):
             'cleaning_date',
             'cleaning_time',
         )
-
-    def validate(self, data):
-        if not data:
-            raise serializers.ValidationError(
-                'Среди указанных полей нет ни '
-                'одного разрешенного для редактирования.')
-        return data
 
     def update(self, instance, validated_data):
         super().update(instance, validated_data)
@@ -544,43 +587,13 @@ class AdminOrderPatchSerializer(OwnerOrderPatchSerializer):
         return instance
 
 
-class PaySerializer(serializers.ModelSerializer):
-    """Сериализатор для оплаты заказа."""
-
-    class Meta:
-        model = Order
-        fields = ('pay_status',)
-
-    def validate(self, data):
-        # TODO: аннотация типов желательна.
-        # REPLE: Пока не до аннотации.
-        request = self.context.get('request')
-        user = request.user
-        order_id = request.data.get('id',)
-        order = get_object_or_404(Order, id=order_id)
-        if order.user is not user:
-            raise serializers.ValidationError(
-                'Попытка оплатить чужой заказ. Оплата не возможна.')
-        if order.pay_status:
-            raise serializers.ValidationError(
-                'Заказ уже оплачен. Повторная оплата не возможна.')
-        if order.order_status == ORDER_CANCELLED_STATUS:
-            raise serializers.ValidationError(
-                'Заказ Отменен. Оплата не возможна.')
-        return data
-
-    def update(self, instance, validated_data):
-        instance.pay_status = True
-        instance.save()
-        return instance
-
-
+@extend_schema_serializer(**RATING_SERIALIZER_SCHEMA)
 class RatingSerializer(serializers.ModelSerializer):
     """
     Сериализатор для представления отзыва на уборку на главной странице.
     """
 
-    user = UserGetSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
 
     class Meta:
         fields = (
@@ -599,38 +612,49 @@ class RatingSerializer(serializers.ModelSerializer):
         )
 
     def to_representation(self, instance):
-        data: dict = super().to_representation(instance)
+        data: dict[str, any] = super().to_representation(instance)
         for field in ('user', 'order'):
             data.pop(field, None)
         return data
 
 
+@extend_schema_serializer(**ORDER_RATING_SERIALIZER_SCHEMA)
 class OrderRatingSerializer(RatingSerializer):
     """
     Сериализатор для создания/изменения отзыва на уборку в приложении.
     """
 
+    # TODO: излишний код валидации, посмотреть позже.
     def validate(self, data):
-        request = self.context.get('request')
-        user = request.user
-        order_id = request.data.get('id',)
-        order = get_object_or_404(Order, id=order_id)
-        if (not request.user.is_authenticated or
-                request.user.is_staff):
+        request: dict[str, any] = self.context.get('request')
+        user: User = request.user
+        order_id: int = request.data.get('id',)
+        order: Order = get_object_or_404(Order, id=order_id)
+        if order.order_status != 'finished':
             raise serializers.ValidationError(
-                'Доступ пользователю запрещен.')
-        if request.method == 'POST':
-            if not order.user == user:
-                raise serializers.ValidationError(
-                    'Оставить отзыв на чужой заказ невозможно.')
-            if not order.order_status == 'finished':
-                raise serializers.ValidationError(
-                    'Оставить отзыв на незавершенный заказ невозможно.')
-            if Rating.objects.filter(order=order, user=user).exists():
-                raise serializers.ValidationError(
-                    'Отзыв на этот заказ вы уже оставляли.')
-        if request.method == 'PUT':
-            if not order.order_status == 'finished':
-                raise serializers.ValidationError(
-                    'Изменить отзыв на незавершенный заказ невозможно.')
+                {
+                    'order_status': (
+                        'Оставить отзыв на незавершенный заказ невозможно.'
+                    ),
+                },
+            )
+        if Rating.objects.filter(order=order, user=user).exists():
+            raise serializers.ValidationError(
+                {
+                    'rating_exists': (
+                        'Отзыв на этот заказ уже существует.'
+                    ),
+                },
+            )
         return data
+
+    # TODO: излишний код создания, посмотреть позже.
+    def create(self, validated_data):
+        request: dict[str, any] = self.context.get('request')
+        order_id: int = request.data.get('id',)
+        order: Order = get_object_or_404(Order, id=order_id)
+        rating: Rating = super().create(validated_data)
+        rating.user: User = request.user
+        rating.order: Order = order
+        rating.save()
+        return rating

@@ -1,0 +1,46 @@
+version: '3.8'
+
+volumes:
+  cleanpro_database_volume:
+  cleanpro_static_volume:
+  cleanpro_media_volume:
+
+services:
+
+  cleanpro_database:
+    image: postgres:15-alpine
+    volumes:
+      - cleanpro_database_volume:/var/lib/postgresql/data/
+    env_file:
+      - backend/.env
+
+  cleanpro_redis:
+    image: redis:7.2.1-alpine
+
+  cleanpro_backend:
+    image: thesuncatcher222/cleanpro_backend:latest
+    env_file: backend/.env
+    volumes:
+      - cleanpro_static_volume:/app/static
+      - cleanpro_media_volume:/app/media
+    depends_on:
+      - cleanpro_database
+      - cleanpro_redis
+
+  cleanpro_frontend:
+    image: thesuncatcher222/cleanpro_frontend:latest
+    volumes:
+      - cleanpro_static_volume:/app/dist
+    depends_on:
+      - cleanpro_backend
+
+  cleanpro_gateway:
+    image: thesuncatcher222/cleanpro_gateway:latest
+    ports:
+      - "8002:8000"
+    volumes:
+      - cleanpro_static_volume:/var/html/static/
+      - cleanpro_media_volume:/var/html/media/
+    depends_on:
+      - cleanpro_backend
+      - cleanpro_frontend

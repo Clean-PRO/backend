@@ -7,17 +7,17 @@ volumes:
 
 services:
 
-  db_cs:
+  cleanpro_database:
     image: postgres:15-alpine
     volumes:
       - database_cs:/var/lib/postgresql/data/
     env_file:
       - backend/.env
 
-  redis:
+  cleanpro_redis:
     image: redis:7.2.1-alpine
 
-  backend:
+  cleanpro_backend:
     build:
       context: backend
       dockerfile: Dockerfile
@@ -26,27 +26,27 @@ services:
       - static_cs:/app/static
       - media_cs:/app/media
     depends_on:
-      - db_cs
-      - redis
+      - cleanpro_database
+      - cleanpro_redis
 
-  frontend:
+  cleanpro_frontend:
     build:
       context: ../frontend
       dockerfile: Dockerfile
     volumes:
       - static_cs:/app/dist
     depends_on:
-      - backend
+      - cleanpro_backend
 
-  nginx:
-    image: nginx:1.19.3-alpine
+  cleanpro_gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "80:8000"
     volumes:
-      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./redocs/:/usr/share/nginx/html/redocs/
       - static_cs:/var/html/static/
       - media_cs:/var/html/media/
     depends_on:
-      - backend
-      - frontend
+      - cleanpro_backend
+      - cleanpro_frontend

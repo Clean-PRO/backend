@@ -1,7 +1,9 @@
-from django.urls import include, path
+from django.urls import include, path, re_path
 from rest_framework import routers
 
 from api.views import (
+    TokenDestroySchemaView,
+    TokenCreateSchemaView,
     CleaningTypeViewSet,
     MeasureViewSet,
     OrderViewSet,
@@ -14,11 +16,11 @@ app_name = 'api'
 
 router = routers.DefaultRouter()
 ROUTER_DATA = (
+    ('cleaning-types', CleaningTypeViewSet,),
     ('measure', MeasureViewSet,),
     ('orders', OrderViewSet,),
     ('ratings', RatingViewSet,),
     ('services', ServiceViewSet),
-    ('types', CleaningTypeViewSet,),
     ('users', UserViewSet,),
 )
 for api_path in ROUTER_DATA:
@@ -26,5 +28,14 @@ for api_path in ROUTER_DATA:
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('auth/', include('djoser.urls.authtoken')),
+    re_path(
+        'auth/token/login/',
+        TokenCreateSchemaView.as_view(),
+        name='login',
+    ),
+    re_path(
+        'auth/token/logout/',
+        TokenDestroySchemaView.as_view(),
+        name='logout',
+    ),
 ]

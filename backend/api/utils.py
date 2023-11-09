@@ -3,6 +3,7 @@
 """
 
 from datetime import date, datetime, time, timedelta
+import hashlib
 import random
 import string
 
@@ -10,22 +11,27 @@ from django.core import mail
 from django.db.models import Q, QuerySet
 
 from cleanpro.app_data import (
-    schedule_generate_bool,
-    DEFAULT_FROM_EMAIL, EMAIL_CODE_LENGTH,
-    SCHEDULE_WORK_START_H, SCHEDULE_WORK_STOP_H,
+    DEFAULT_FROM_EMAIL, PASS_ITERATIONS, SCHEDULE_WORK_START_H,
+    SCHEDULE_WORK_STOP_H, SECRET_SALT, USER_PASS_RAND_CYCLES,
 )
 from services.models import Order
 from users.models import Address, User
 
 
-def generate_code():
-    """Генерирует случайный цифро-символьный код."""
-    return ''.join(
-        random.choices(
-            string.ascii_uppercase + string.digits,
-            k=EMAIL_CODE_LENGTH
-        )
-    )
+def create_password(email: str) -> str:
+    """Создает случайный пароль на базе зерна хэш-значения email."""
+    email_secret: str = f'{email}{SECRET_SALT}'
+    for _ in range(PASS_ITERATIONS):
+        email_secret: str = hashlib.sha256(email_secret.encode()).hexdigest()
+    random.seed(email_secret)
+    pass_chars: list[str] = []
+    for _ in range(USER_PASS_RAND_CYCLES):
+        lowercase: str = random.choice(string.ascii_lowercase)
+        uppercase: str = random.choice(string.ascii_uppercase)
+        digit: str = random.choice(string.digits)
+        special: str = random.choice('!_@#$%^&+=')
+        pass_chars.extend([lowercase, uppercase, digit, special])
+    return ''.join(pass_chars)
 
 
 def get_or_create_address(address_data) -> Address:
@@ -146,3 +152,19 @@ def get_available_time_json(cleaning_date: date, total_time: int) -> dict:
         if available_cleaners.exists():
             response_data[current_time] = True
     return response_data
+
+
+HOURS_IN_DAY: int = 24
+AVAILABLE_MINUTES: tuple[int] = (0, 30)
+
+
+def schedule_generate_bool(value: any = False):
+    """
+    Генерирует пустой словарь с графиком времени уборок.
+    Формат: {"00:00": value, "00:30": value, ... "23:30": value}
+    """
+    schedule_bool: dict[str, any] = {}
+    for hour in range(HOURS_IN_DAY):
+        for minute in AVAILABLE_MINUTES:
+            schedule_bool[f'{hour:02}:{minute:02}'] = value
+    return schedule_bool

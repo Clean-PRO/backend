@@ -7,7 +7,15 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from cleanpro.app_data import ORDER_CANCELLED_STATUS
+from cleanpro.app_data import (
+    CLEANING_TIME_MINUTE_MIN,
+    CLEANING_TYPE_TITLE_MAX_LEN, CLEANING_TYPE_COEF_MIN_VAL,
+    MEASURE_TITLE_MAX_LEN,
+    ORDER_COMMENT_MAX_LEN, ORDER_STATUS_CHOICES, ORDER_TOTAL_SUM_MIN_VAL,
+    ORDER_TOTAL_TIME_MIN_VAL,
+    SERVICE_PRICE_MIN_VAL, SERVICE_TITLE_MAX_LEN, SERVICE_TYPE,
+    SERVICE_TYPE_MAX_LEN,
+)
 from users.models import Address
 
 
@@ -16,7 +24,7 @@ class Measure(models.Model):
 
     title = models.CharField(
         verbose_name='Единица измерения',
-        max_length=25,
+        max_length=MEASURE_TITLE_MAX_LEN,
         unique=True,
     )
 
@@ -31,21 +39,18 @@ class Measure(models.Model):
 class Service(models.Model):
     """Модель услуг."""
 
-    SERVICE_TYPE = [
-        ('main', 'Основная'),
-        ('additional', 'Дополнительная'),
-    ]
-
     title = models.CharField(
         verbose_name='Название услуги',
-        max_length=60,
+        max_length=SERVICE_TITLE_MAX_LEN,
         unique=True
     )
     price = models.FloatField(
         verbose_name='Цена услуги за единицу услуги',
-        max_length=7,
         validators=(
-            MinValueValidator(1, 'Укажите корректную сумму.'),
+            MinValueValidator(
+                SERVICE_PRICE_MIN_VAL,
+                'Укажите корректную сумму.',
+            ),
         ),
     )
     measure = models.ForeignKey(
@@ -63,13 +68,16 @@ class Service(models.Model):
     service_type = models.CharField(
         verbose_name='Тип услуги',
         choices=SERVICE_TYPE,
-        max_length=11,
+        max_length=SERVICE_TYPE_MAX_LEN,
         default='main',
     )
     cleaning_time = models.IntegerField(
         verbose_name='Время на услугу',
         validators=(
-            MinValueValidator(1, 'Укажите корректное время!'),
+            MinValueValidator(
+                CLEANING_TIME_MINUTE_MIN,
+                'Укажите корректное время!',
+            ),
         ),
     )
 
@@ -86,20 +94,21 @@ class CleaningType(models.Model):
 
     title = models.CharField(
         verbose_name='Название наборов услуг.',
-        max_length=25,
+        max_length=CLEANING_TYPE_TITLE_MAX_LEN,
         unique=True,
     )
     coefficient = models.FloatField(
         verbose_name='Коэффициент повышения цены',
-        max_length=3,
         validators=(
-            MinValueValidator(1, 'Коэффициент не может быть меньше 1'),
+            MinValueValidator(
+                CLEANING_TYPE_COEF_MIN_VAL,
+                'Коэффициент не может быть меньше 1',
+            ),
         ),
     )
     service = models.ManyToManyField(
         Service,
         through='ServicesInCleaningType',
-        through_fields=('cleaning_type', 'service',),
     )
 
     class Meta:
@@ -116,13 +125,13 @@ class ServicesInCleaningType(models.Model):
     cleaning_type = models.ForeignKey(
         CleaningType,
         related_name='services_in_cleaning',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         verbose_name='Набор услуг',
     )
     service = models.ForeignKey(
         Service,
         related_name='services_in_cleaning',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         verbose_name='Услуга',
     )
 
@@ -134,12 +143,6 @@ class ServicesInCleaningType(models.Model):
 class Order(models.Model):
     """Модель заказа."""
 
-    STATUS_CHOICES = (
-        ('created', 'Создан'),
-        ('accepted', 'Принят'),
-        ('finished', 'Завершен'),
-        (ORDER_CANCELLED_STATUS, 'Отменен'),
-    )
     user = models.ForeignKey(
         verbose_name='Заказчик',
         to=settings.AUTH_USER_MODEL,
@@ -160,32 +163,38 @@ class Order(models.Model):
     total_sum = models.IntegerField(
         verbose_name='Сумма',
         validators=[
-            MinValueValidator(1, 'Укажите корректную итоговую сумму!'),
+            MinValueValidator(
+                ORDER_TOTAL_SUM_MIN_VAL,
+                'Укажите корректную итоговую сумму!',
+            ),
         ]
     )
     total_time = models.IntegerField(
         verbose_name='Суммарное время',
         validators=(
-            MinValueValidator(1, 'Укажите корректное время!'),
+            MinValueValidator(
+                ORDER_TOTAL_TIME_MIN_VAL,
+                'Укажите корректное время!',
+            ),
         ),
     )
     comment = models.CharField(
         verbose_name='Комментарий',
-        max_length=512,
+        max_length=ORDER_COMMENT_MAX_LEN,
         default=None,
         blank=True,
         null=True,
     )
     comment_cancel = models.CharField(
         verbose_name='Комментарий отмены',
-        max_length=512,
+        max_length=ORDER_COMMENT_MAX_LEN,
         default=None,
         blank=True,
         null=True,
     )
     order_status = models.CharField(
         verbose_name='Статус заказа',
-        choices=STATUS_CHOICES,
+        choices=ORDER_STATUS_CHOICES,
         default='Создан',
         max_length=512,
     )
@@ -198,7 +207,6 @@ class Order(models.Model):
     services = models.ManyToManyField(
         Service,
         through='ServicesInOrder',
-        through_fields=('order', 'service'),
         verbose_name='Услуги',
     )
     rooms_number = models.IntegerField(
@@ -221,7 +229,7 @@ class Order(models.Model):
         verbose_name='Адрес',
         to=Address,
         related_name='orders',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )
     creation_date = models.DateField(
         verbose_name='Дата создания',
@@ -256,12 +264,18 @@ class Order(models.Model):
     )
 
     class Meta:
-        ordering = ('-cleaning_date',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=('address', 'cleaning_date', 'cleaning_time'),
+                name='unique_address_cleaning',
+            ),
+        ]
+        ordering = ('-cleaning_date', '-cleaning_time',)
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
 
     def __str__(self):
-        return f"Заказ №: {self.id}"
+        return f"Заказ № {self.id}"
 
     def save(self, *args, **kwargs):
         time_start: datetime = datetime.combine(
@@ -270,7 +284,7 @@ class Order(models.Model):
         )
         time_end = time_start + timedelta(minutes=self.total_time)
         self.cleaning_time_end = time_end.time()
-        super(Order, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 class ServicesInOrder(models.Model):
@@ -285,7 +299,7 @@ class ServicesInOrder(models.Model):
     service = models.ForeignKey(
         Service,
         related_name='services_in_order',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         verbose_name='Услуга',
     )
     amount = models.PositiveIntegerField(
@@ -332,7 +346,7 @@ class Rating(models.Model):
         default=False,
     )
     order = models.ForeignKey(
-        verbose_name='Заказа',
+        verbose_name='Заказ',
         to=Order,
         related_name='rating',
         on_delete=models.SET_NULL,
@@ -357,10 +371,12 @@ class Rating(models.Model):
     )
 
     class Meta:
-        constraints = [models.UniqueConstraint(
-            fields=('user', 'order'),
-            name='unique_user_order_rating'
-        )]
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'order'),
+                name='unique_user_order_rating',
+            ),
+        ]
         ordering = ('-id',)
         verbose_name = 'Отзыв заказа'
         verbose_name_plural = 'Отзывы заказов'
