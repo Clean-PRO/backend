@@ -12,14 +12,14 @@ services:
     volumes:
       - cleanpro_database_volume:/var/lib/postgresql/data/
     env_file:
-      - backend/.env
+      - .env
 
   cleanpro_redis:
     image: redis:7.2.1-alpine
 
   cleanpro_backend:
     image: thesuncatcher222/cleanpro_backend:latest
-    env_file: backend/.env
+    env_file: .env
     volumes:
       - cleanpro_static_volume:/app/static
       - cleanpro_media_volume:/app/media
