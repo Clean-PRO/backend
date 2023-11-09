@@ -16,6 +16,7 @@ from djoser.views import TokenCreateView, TokenDestroyView
 from api.filters import FilterService
 from api.permissions import (
     IsAdminOrReadOnly,
+    IsCurrentUserOrAdmin,
     IsOwnerOrAdmin,
     IsOwnerAbleToPay,
 )
@@ -58,6 +59,7 @@ from services.signals import get_cached_reviews
 from users.models import User
 
 
+# TODO: Метод PUT требует все поля. Исправить.
 @extend_schema_view(**CLEANING_TYPES_SCHEMA)
 class CleaningTypeViewSet(viewsets.ModelViewSet):
     """Работа с наборами услуг."""
@@ -94,9 +96,15 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.request.method == 'POST':
-            self.permission_classes = (permissions.IsAuthenticated,)
+            self.permission_classes = (permissions.AllowAny,)
         else:
             self.permission_classes = (IsOwnerOrAdmin,)
+        if self.action == 'rating':
+            self.permission_classes = (IsOwnerOrAdmin,)
+        elif self.action == 'pay':
+            self.permission_classes = (IsOwnerAbleToPay,)
+        elif self.action == 'get_available_time':
+            self.permission_classes = (permissions.AllowAny,)
         return super().get_permissions()
 
     def get_queryset(self):
@@ -109,17 +117,19 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.request.method == 'GET':
             return OrderGetSerializer
         if self.request.method in ('PATCH', 'PUT'):
+            # TODO: проверить работу.
             if self.request.user.is_staff:
                 return AdminOrderPatchSerializer
             else:
                 return OwnerOrderPatchSerializer
         return OrderPostSerializer
 
+    # TODO: разобраться с логикой создать/обновить.
+    # TODO: проверить при развертке документацию.
     @action(
         detail=True,
         methods=('post', 'put',),
         url_path='rating',
-        permission_classes=(IsOwnerOrAdmin,)
     )
     def rating(self, request, pk):
         """Оценить заказ."""
@@ -145,12 +155,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
-        detail=False,
+        detail=True,
         methods=('post',),
-        permission_classes=(IsOwnerAbleToPay,),
         url_path='pay',
     )
-    def pay(self, request):
+    def pay(self, request, pk):
         """Оплатить заказ."""
         order: Order = self.get_object()
         status_code: status = status.HTTP_400_BAD_REQUEST
@@ -200,6 +209,7 @@ class RatingViewSet(viewsets.ModelViewSet):
     http_method_names = ('get', 'patch',)
     pagination_class = LimitOffsetPagination
 
+    # TODO: Сделать пагинацию.
     def list(self, request, *args, **kwargs):
         cached_reviews: list[dict] = get_cached_reviews()
         page = self.paginate_queryset(cached_reviews)
@@ -212,11 +222,13 @@ class RatingViewSet(viewsets.ModelViewSet):
         return
 
 
+# TODO: Метод PUT требует всех полей. Исправить.
 @extend_schema_view(**SERVICE_SCHEMA)
 class ServiceViewSet(viewsets.ModelViewSet):
     """Работа с услугами."""
 
     queryset = Service.objects.select_related('measure').all()
+    pagination_class = None
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = FilterService
@@ -246,6 +258,8 @@ class TokenDestroySchemaView(TokenDestroyView):
     pass
 
 
+# TODO: НЕ ВАЛИДИРУЕТСЯ ПОЧТА!!!
+# TODO: метод PUT требует все поля. Исправить.
 @extend_schema_view(**USER_SCHEMA)
 class UserViewSet(viewsets.ModelViewSet):
     """Работа с пользователями."""
@@ -260,16 +274,21 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.request.method == 'POST':
-            return [permissions.AllowAny()]
-        if self.request.method == 'GET':
-            return [permissions.IsAdminUser()]
-        return [IsOwnerOrAdmin()]
+            self.permission_classes = (permissions.AllowAny,)
+        elif self.request.method == 'GET':
+            self.permission_classes = (permissions.IsAdminUser,)
+        else:
+            self.permission_classes = (IsCurrentUserOrAdmin,)
+        if self.action == 'me':
+            self.permission_classes = (permissions.IsAuthenticated,)
+        elif self.action in ('confirm_email', 'confirm_password'):
+            self.permission_classes = (permissions.AllowAny,)
+        return super().get_permissions()
 
     @action(
         detail=True,
-        url_path='orders',
         methods=('get',),
-        permission_classes=(permissions.IsAuthenticated,)
+        url_path='orders',
     )
     def orders(self, request, pk):
         """Возвращает список заказов авторизированного пользователя."""
@@ -290,9 +309,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False,
-        url_path='me',
         methods=('get',),
-        permission_classes=(permissions.IsAuthenticated,)
+        url_path='me',
     )
     def me(self, request):
         """Возвращает данные авторизированного пользователя."""
@@ -306,9 +324,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False,
-        url_path='confirm_email',
         methods=('post',),
-        permission_classes=(permissions.AllowAny,)
+        url_path='confirm_email',
     )
     def confirm_email(self, request):
         """
@@ -344,9 +361,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False,
-        url_path='confirm_password',
         methods=('post',),
-        permission_classes=(permissions.AllowAny,)
+        url_path='confirm_password',
     )
     def confirm_password(self, request):
         """
