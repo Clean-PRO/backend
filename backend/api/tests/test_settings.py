@@ -4,7 +4,7 @@ from cleanpro.app_data import (
     # Secrets
     PASS_ITERATIONS, SECRET_KEY, SECRET_SALT,
     # Company data
-    CLEANPRO_HOST, CLEANPRO_YA_MAPS_ID,
+    CLEANPRO_HOST, CLEANPRO_HOST_IP, CLEANPRO_YA_MAPS_ID,
     # Database settings
     DATABASE_POSTGRESQL, DB_ENGINE, DB_HOST,
     DB_NAME, DB_PASSWORD, DB_PORT, DB_USER,
@@ -48,6 +48,7 @@ class TestProdSettings():
             # Company data
             'CLEANPRO_HOST': CLEANPRO_HOST,
             'CLEANPRO_YA_MAPS_ID': CLEANPRO_YA_MAPS_ID,
+            'CLEANPRO_HOST_IP': CLEANPRO_HOST_IP,
             # Database settings
             'DB_ENGINE': DB_ENGINE,
             'DB_HOST': DB_HOST,
