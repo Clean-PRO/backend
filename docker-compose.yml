@@ -20,7 +20,7 @@ services:
   cleanpro_backend:
     build:
       context: backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile_dev
     env_file: backend/.env
     volumes:
       - static_cs:/app/static
