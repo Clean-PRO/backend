@@ -18,4 +18,4 @@ COPY . .
 
 RUN dos2unix run_django_not_prod.sh
 
-CMD ["bash", "run_django_not_prod.sh"]
+CMD ["bash", "run_django_gunicorn.sh"]
