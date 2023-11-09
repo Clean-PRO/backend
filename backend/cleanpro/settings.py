@@ -4,10 +4,13 @@ import os
 from celery.schedules import crontab
 from corsheaders.defaults import default_headers
 
-from .app_data import (
+from cleanpro.app_data import (
     BASE_DIR,
     CLEANPRO_HOST,
     DEFAULT_FROM_EMAIL,
+    EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD,
+    EMAIL_USE_TLS, EMAIL_USE_SSL, EMAIL_SSL_CERTFILE,
+    EMAIL_SSL_KEYFILE, EMAIL_TIMEOUT,
     DATABASE_POSTGRESQL, DATABASE_SQLITE,
     SECRET_KEY,
 )
@@ -16,7 +19,7 @@ from .app_data import (
 """App settings."""
 
 
-DEBUG: bool = True
+DEBUG: bool = False
 
 
 """Celery settings."""
@@ -112,35 +115,31 @@ if DEBUG:
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-EMAIL_HOST: str = os.getenv('EMAIL_HOST')
+EMAIL_HOST: str = EMAIL_HOST
 
-EMAIL_PORT: int = int(os.getenv('EMAIL_PORT'))
+EMAIL_PORT: int = EMAIL_PORT
 
-EMAIL_HOST_USER: str = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_USER: str = EMAIL_HOST_USER
 
-EMAIL_HOST_PASSWORD: str = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_PASSWORD: str = EMAIL_HOST_PASSWORD
 
-EMAIL_USE_TLS: str = os.getenv('EMAIL_USE_TLS', False)
 if EMAIL_USE_TLS == 'True':
     EMAIL_USE_TLS: bool = True
 else:
     EMAIL_USE_TLS: bool = False
 
-EMAIL_USE_SSL: str = os.getenv('EMAIL_USE_SSL', False)
 if EMAIL_USE_SSL == 'True':
     EMAIL_USE_SSL: bool = True
 else:
     EMAIL_USE_SSL: bool = False
 
-EMAIL_SSL_CERTFILE: str = os.getenv('EMAIL_SSL_CERTFILE', 'None')
 if EMAIL_SSL_CERTFILE == 'None':
     EMAIL_SSL_CERTFILE: None = None
 
-EMAIL_SSL_KEYFILE: str = os.getenv('EMAIL_SSL_KEYFILE', 'None')
 if EMAIL_SSL_KEYFILE == 'None':
     EMAIL_SSL_KEYFILE: None = None
 
-EMAIL_TIMEOUT: int = int(os.getenv('EMAIL_TIMEOUT'))
+EMAIL_TIMEOUT: int = EMAIL_TIMEOUT
 
 
 """Static files settings."""

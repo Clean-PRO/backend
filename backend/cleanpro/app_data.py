@@ -27,11 +27,11 @@ SCHEDULE_WORK_STOP_H: str = 21
 
 
 DB_ENGINE: str = os.getenv('DB_ENGINE')
-DB_USER: str = os.getenv('POSTGRES_USER')
-DB_PASSWORD: str = os.getenv('POSTGRES_PASSWORD')
 DB_HOST: str = os.getenv('DB_HOST')
 DB_PORT: str = os.getenv('DB_PORT')
-DB_NAME: str = os.getenv('POSTGRES_DB')
+DB_NAME: str = os.getenv('DB_NAME')
+DB_USER: str = os.getenv('POSTGRES_USER')
+DB_PASSWORD: str = os.getenv('POSTGRES_PASSWORD')
 
 DATABASE_POSTGRESQL: dict[str, dict[str, any]] = {
     'default': {
@@ -156,9 +156,37 @@ EMAIL_REGISTER_TEXT: str = (
 )
 
 
+"""Email settings."""
+
+
+EMAIL_HOST: str = os.getenv('EMAIL_HOST')
+
+EMAIL_PORT: str = os.getenv('EMAIL_PORT')
+
+EMAIL_HOST_USER: str = os.getenv('EMAIL_HOST_USER')
+
+EMAIL_HOST_PASSWORD: str = os.getenv('EMAIL_HOST_PASSWORD')
+
+EMAIL_USE_TLS: str = os.getenv('EMAIL_USE_TLS', False)
+
+EMAIL_USE_SSL: str = os.getenv('EMAIL_USE_SSL', False)
+
+EMAIL_SSL_CERTFILE: str = os.getenv('EMAIL_SSL_CERTFILE', 'None')
+
+EMAIL_SSL_KEYFILE: str = os.getenv('EMAIL_SSL_KEYFILE', 'None')
+
+EMAIL_TIMEOUT: int = os.getenv('EMAIL_TIMEOUT')
+if EMAIL_TIMEOUT is not None:
+    EMAIL_TIMEOUT: int = int(EMAIL_TIMEOUT)
+
+
 """Security data."""
 
 
 SECRET_KEY: str = os.getenv('SECRET_KEY')
+
 SECRET_SALT: str = os.getenv('SECRET_SALT')
-PASS_ITERATIONS: int = int(os.getenv('PASS_ITERATIONS'))
+
+PASS_ITERATIONS: int = os.getenv('PASS_ITERATIONS')
+if PASS_ITERATIONS is not None:
+    PASS_ITERATIONS: int = int(PASS_ITERATIONS)
