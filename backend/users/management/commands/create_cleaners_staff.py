@@ -9,6 +9,7 @@ from django.db.models import QuerySet
 from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import ValidationError
 
+from api.utils import create_password
 from users.models import User
 
 CLEANERS_MIN: int = 2
@@ -38,7 +39,7 @@ def create_cleaners(count: int) -> None:
             email: str = f'cleaner_pro_{i}@email.com'
             if cleaners_exists.filter(email=email).exists():
                 continue
-            password: str = f'!ISuperCleaner{i}!'
+            password: str = create_password(email=email)
             username: str = f'Иван Клинер-{NUMS_TO_TEXT.get(i, "Неизвестный")}'
             new_cleaner: User = User(
                 email=email,
