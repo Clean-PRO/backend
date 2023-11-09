@@ -11,7 +11,8 @@ load_dotenv(os.path.join(BASE_DIR, '.env'), verbose=True)
 """Company data."""
 
 
-CLEANPRO_HOST = os.getenv('CLEANPRO_HOST')
+CLEANPRO_HOST: str = os.getenv('CLEANPRO_HOST')
+CLEANPRO_HOST_IP: str = os.getenv('CLEANPRO_HOST_IP')
 
 CLEANPRO_YA_MAPS_ID: str = os.getenv('CLEANPRO_YA_MAPS_ID')
 

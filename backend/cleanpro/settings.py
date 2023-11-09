@@ -6,7 +6,7 @@ from corsheaders.defaults import default_headers
 
 from cleanpro.app_data import (
     BASE_DIR,
-    CLEANPRO_HOST,
+    CLEANPRO_HOST, CLEANPRO_HOST_IP,
     DEFAULT_FROM_EMAIL,
     EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD,
     EMAIL_USE_TLS, EMAIL_USE_SSL, EMAIL_SSL_CERTFILE,
@@ -228,7 +228,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    CLEANPRO_HOST
+    CLEANPRO_HOST,
+    CLEANPRO_HOST_IP,
 ]
 
 CORS_ALLOW_CREDENTIALS = True
