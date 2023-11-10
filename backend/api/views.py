@@ -55,7 +55,7 @@ from .schemas_views import (
     USER_SCHEMA,
 )
 from services.models import CleaningType, Measure, Order, Rating, Service
-from services.signals import get_cached_reviews
+# from services.signals import get_cached_reviews
 from users.models import User
 
 
@@ -209,11 +209,12 @@ class RatingViewSet(viewsets.ModelViewSet):
     http_method_names = ('get', 'patch',)
     pagination_class = LimitOffsetPagination
 
-    # TODO: Сделать пагинацию.
-    def list(self, request, *args, **kwargs):
-        cached_reviews: list[dict] = get_cached_reviews()
-        page = self.paginate_queryset(cached_reviews)
-        return Response(page)
+    # INFO: временно отключено кэширование
+    # # TODO: Сделать пагинацию.
+    # def list(self, request, *args, **kwargs):
+    #     cached_reviews: list[dict] = get_cached_reviews()
+    #     page = self.paginate_queryset(cached_reviews)
+    #     return Response(page)
 
     def perform_create(self, serializer):
         order_id: int = self.kwargs.get('order_id')
