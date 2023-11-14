@@ -96,7 +96,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.request.method == 'POST':
-            self.permission_classes = (permissions.AllowAny,)
+            self.permission_classes = (permissions.IsAuthenticated,)
         else:
             self.permission_classes = (IsOwnerOrAdmin,)
         if self.action == 'rating':
