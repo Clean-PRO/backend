@@ -92,7 +92,6 @@ class OrderViewSet(viewsets.ModelViewSet):
     """Работа с заказами."""
 
     http_method_names = ('get', 'post', 'put',)
-    queryset = Order.objects.select_related('user', 'address',).all()
 
     def get_permissions(self):
         if self.request.method == 'POST':
@@ -109,20 +108,24 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if not self.request.user.is_staff:
-            return self.queryset.filter(user=self.request.user)
+            return Order.objects.select_related(
+                'user',
+                'address',
+            ).filter(
+                user=self.request.user,
+            )
         else:
-            return self.queryset
+            return Order.objects.select_related('user', 'address',).all()
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return OrderGetSerializer
-        if self.request.method in ('PATCH', 'PUT'):
-            # TODO: проверить работу.
-            if self.request.user.is_staff:
-                return AdminOrderPatchSerializer
-            else:
-                return OwnerOrderPatchSerializer
-        return OrderPostSerializer
+        if self.request.method == 'POST':
+            return OrderPostSerializer
+        # TODO: проверить работу, переименовать сериализаторы
+        if self.request.user.is_staff:
+            return AdminOrderPatchSerializer
+        return OwnerOrderPatchSerializer
 
     # TODO: разобраться с логикой создать/обновить.
     # TODO: проверить при развертке документацию.
