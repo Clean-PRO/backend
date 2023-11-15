@@ -1,6 +1,6 @@
+from datetime import datetime, date, time
 import random
 import re
-from datetime import datetime
 
 from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerializer  # noqa (E501)
 from django.db import transaction
@@ -410,6 +410,27 @@ class OrderPostSerializer(serializers.ModelSerializer):
         #       чтобы его не подменили.
         return total_sum_data
 
+    def validate(self, data):
+        address_data: dict[str, any] = data.get('address')
+        cleaning_date: date = data.get('cleaning_date')
+        cleaning_time: time = data.get('cleaning_time')
+        if Order.objects.filter(
+            cleaning_date=cleaning_date,
+            cleaning_time=cleaning_time,
+            address__city=address_data.get('city'),
+            address__street=address_data.get('street'),
+            address__house=address_data.get('house'),
+            address__apartment=address_data.get('apartment'),
+        ).exists():
+            raise serializers.ValidationError(
+                {
+                    'order': (
+                        'Заказ на указанный адрес и время уже создан.'
+                    ),
+                },
+            )
+        return data
+
     @transaction.atomic
     def create(self, data):
         """
@@ -531,8 +552,13 @@ class OwnerOrderPatchSerializer(serializers.ModelSerializer):
             'cleaning_time',
         )
 
+    # TODO: доработать валидацию.
     def validate(self, data):
-        if not data.get('order_status') == ORDER_CANCELLED_STATUS:
+        order_status: str = data.get('order_status')
+        if order_status is None:
+            data.pop('comment_cancel')
+            return data
+        if order_status != ORDER_CANCELLED_STATUS:
             raise serializers.ValidationError(
                 {
                     'order_status': (
@@ -540,12 +566,21 @@ class OwnerOrderPatchSerializer(serializers.ModelSerializer):
                     ),
                 },
             )
+        comment_cancel: str = data.get('comment_cancel')
+        if comment_cancel is None:
+            raise serializers.ValidationError(
+                {
+                    'comment_cancel': (
+                        'Пожалуйста, укажите причину отмены заказа.'
+                    ),
+                },
+            )
         return data
 
     def update(self, instance, validated_data):
         super().update(instance, validated_data)
-        if 'comment_cancel' in validated_data:
-            instance.order_status = 'cancelled'
+        order_status: str = validated_data.get('order_status')
+        if order_status == ORDER_CANCELLED_STATUS:
             instance.cancel_date: datetime = datetime.today().date()
             instance.cancel_time: datetime = datetime.today().time()
         instance.save()
