@@ -16,12 +16,12 @@ app_name = 'api'
 
 router = routers.DefaultRouter()
 ROUTER_DATA = (
-    ('cleaning-types', CleaningTypeViewSet,),
-    ('measure', MeasureViewSet,),
-    ('orders', OrderViewSet,),
-    ('ratings', RatingViewSet,),
-    ('services', ServiceViewSet),
-    ('users', UserViewSet,),
+    ('cleaning-types', CleaningTypeViewSet, 'cleaning-types'),
+    ('measure', MeasureViewSet, 'measure'),
+    ('orders', OrderViewSet, 'orders'),
+    ('ratings', RatingViewSet, 'ratings'),
+    ('services', ServiceViewSet, 'services'),
+    ('users', UserViewSet, 'users'),
 )
 for api_path in ROUTER_DATA:
     router.register(*api_path)
