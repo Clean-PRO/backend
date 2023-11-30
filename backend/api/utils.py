@@ -18,14 +18,14 @@ from services.models import Order
 from users.models import Address, User
 
 
-def create_password(email: str) -> str:
+def create_password(email: str, cycles: int = USER_PASS_RAND_CYCLES) -> str:
     """Создает случайный пароль на базе зерна хэш-значения email."""
     email_secret: str = f'{email}{SECRET_SALT}'
     for _ in range(PASS_ITERATIONS):
         email_secret: str = hashlib.sha256(email_secret.encode()).hexdigest()
     random.seed(email_secret)
     pass_chars: list[str] = []
-    for _ in range(USER_PASS_RAND_CYCLES):
+    for _ in range(cycles):
         lowercase: str = random.choice(string.ascii_lowercase)
         uppercase: str = random.choice(string.ascii_uppercase)
         digit: str = random.choice(string.digits)
