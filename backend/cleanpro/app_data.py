@@ -53,6 +53,28 @@ DATABASE_SQLITE: dict[str, dict[str, any]] = {
 }
 
 
+"""Debug settings."""
+
+
+DEBUG: str = os.getenv('DEBUG')
+if DEBUG == 'True':
+    DEBUG: bool = True
+else:
+    DEBUG: bool = False
+
+DEBUG_DATABASE: str = os.getenv('DEBUG_DATABASE')
+if DEBUG_DATABASE == 'True':
+    DEBUG_DATABASE: bool = True
+else:
+    DEBUG_DATABASE: bool = False
+
+DEBUG_MAIL: str = os.getenv('DEBUG_MAIL')
+if DEBUG_MAIL == 'True':
+    DEBUG_MAIL: bool = True
+else:
+    DEBUG_MAIL: bool = False
+
+
 """Models data."""
 
 
@@ -191,3 +213,17 @@ SECRET_SALT: str = os.getenv('SECRET_SALT')
 PASS_ITERATIONS: int = os.getenv('PASS_ITERATIONS')
 if PASS_ITERATIONS is not None:
     PASS_ITERATIONS: int = int(PASS_ITERATIONS)
+
+
+"""Social Auth."""
+
+SOCIAL_AUTH_GITHUB_KEY = os.getenv('SOCIAL_AUTH_GITHUB_KEY')
+SOCIAL_AUTH_GITHUB_SECRET = os.getenv('SOCIAL_AUTH_GITHUB_SECRET')
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')  # noqa (E501)
+SOCIAL_AUTH_VK_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_VK_OAUTH2_KEY')
+SOCIAL_AUTH_VK_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_VK_OAUTH2_SECRET')
+SOCIAL_AUTH_YANDEX_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_YANDEX_OAUTH2_KEY')
+SOCIAL_AUTH_YANDEX_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_YANDEX_OAUTH2_SECRET')  # noqa (E501)
+
+SOCIAL_USER_PASSWORD_CYCLES: int = 50

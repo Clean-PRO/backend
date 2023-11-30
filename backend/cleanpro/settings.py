@@ -7,19 +7,25 @@ from corsheaders.defaults import default_headers
 from cleanpro.app_data import (
     BASE_DIR,
     CLEANPRO_HOST, CLEANPRO_HOST_IP,
+    DEBUG, DEBUG_MAIL, DEBUG_DATABASE,
     DEFAULT_FROM_EMAIL,
     EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD,
     EMAIL_USE_TLS, EMAIL_USE_SSL, EMAIL_SSL_CERTFILE,
     EMAIL_SSL_KEYFILE, EMAIL_TIMEOUT,
     DATABASE_POSTGRESQL, DATABASE_SQLITE,
     SECRET_KEY,
+    SOCIAL_AUTH_GITHUB_KEY, SOCIAL_AUTH_GITHUB_SECRET,
+    SOCIAL_AUTH_GOOGLE_OAUTH2_KEY, SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET,
+    SOCIAL_AUTH_VK_OAUTH2_KEY, SOCIAL_AUTH_VK_OAUTH2_SECRET,
+    SOCIAL_AUTH_YANDEX_OAUTH2_KEY, SOCIAL_AUTH_YANDEX_OAUTH2_SECRET,
+    SOCIAL_USER_PASSWORD_CYCLES,
 )
 
 
 """App settings."""
 
 
-DEBUG: bool = False
+DEBUG: bool = DEBUG
 
 
 """Celery settings."""
@@ -54,30 +60,38 @@ CACHES = {
     }
 }
 
-DATABASES = DATABASE_SQLITE if DEBUG else DATABASE_POSTGRESQL
+DATABASES = DATABASE_SQLITE if DEBUG_DATABASE else DATABASE_POSTGRESQL
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-INSTALLED_APPS = [
+INSTALLED_APPS_DJANGO = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',
+]
+
+INSTALLED_APPS_THIRD_PARTY = [
     'corsheaders',
-    'rest_framework.authtoken',
-    'djoser',
-    'django_password_validators',
     'django_filters',
-    'phonenumber_field',
-    'drf_yasg',
+    'django_password_validators',
+    'djoser',
     'drf_spectacular',
+    'phonenumber_field',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'social_django',
+]
+
+INSTALLED_APPS_LOCAL = [
     'api',
     'services',
     'users',
 ]
+
+INSTALLED_APPS = INSTALLED_APPS_DJANGO + INSTALLED_APPS_THIRD_PARTY + INSTALLED_APPS_LOCAL
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -90,6 +104,9 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+# INFO: при использовании PostgreSQL рекомендуется использовать JSONB.
+SOCIAL_AUTH_JSONFIELD_ENABLED = True
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Cleanpro API",
@@ -109,7 +126,7 @@ WSGI_APPLICATION = 'cleanpro.wsgi.application'
 
 DEFAULT_FROM_EMAIL = DEFAULT_FROM_EMAIL
 
-if DEBUG:
+if DEBUG_MAIL:
     EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
     EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 else:
@@ -164,6 +181,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
             ],
         },
     },
@@ -225,6 +243,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.github.GithubOAuth2',
+    # https://developers.google.com/identity/protocols/oauth2?csw=1&hl=ru
+    'social_core.backends.google.GoogleOAuth2',
+    'social_core.backends.yandex.YandexOAuth2',
+    # https://dev.vk.com/ru/method
+    'social_core.backends.vk.VKAppOAuth2',
+    # INFO: ModelBackend должен идти последним.
+    # INFO: нужен, если используется django.contrib.auth в проекте.
+    'django.contrib.auth.backends.ModelBackend',
+)
+
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
@@ -271,3 +301,39 @@ MIDDLEWARE = [
 ]
 
 SECRET_KEY = SECRET_KEY
+
+SOCIAL_AUTH_GITHUB_KEY = SOCIAL_AUTH_GITHUB_KEY
+SOCIAL_AUTH_GITHUB_SECRET = SOCIAL_AUTH_GITHUB_SECRET
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET
+SOCIAL_AUTH_VK_OAUTH2_KEY = SOCIAL_AUTH_VK_OAUTH2_KEY
+SOCIAL_AUTH_VK_OAUTH2_SECRET = SOCIAL_AUTH_VK_OAUTH2_SECRET
+SOCIAL_AUTH_YANDEX_OAUTH2_KEY = SOCIAL_AUTH_YANDEX_OAUTH2_KEY
+SOCIAL_AUTH_YANDEX_OAUTH2_SECRET = SOCIAL_AUTH_YANDEX_OAUTH2_SECRET
+
+SOCIAL_AUTH_PIPELINE = (
+    # Get the information we can about the user and return it in a simple
+    # format to create the user instance later.
+    'social_core.pipeline.social_auth.social_details',
+    # Get the social uid from whichever service we're authing thru.
+    # The uid is the unique identifier of the given user in the provider.
+    'social_core.pipeline.social_auth.social_uid',
+    # Verifies that the current auth process is valid
+    # within the current project, this is where emails and domains
+    # whitelists are applied (if defined).
+    'social_core.pipeline.social_auth.auth_allowed',
+    # CUSTOM create a user account if does'n exists.
+    'users.oauth.create_user_social_pipeline',
+)
+
+# # Path to redirect if new user oauth succeed.
+SOCIAL_AUTH_LOGIN_REDIRECT_URL: str = '/'
+
+SOCIAL_USER_FIELDS: tuple[str] = (
+    'first_name',
+    'last_name',
+    'email',
+)
+
+SOCIAL_USER_PASSWORD_CYCLES: int = SOCIAL_USER_PASSWORD_CYCLES
