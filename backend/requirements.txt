@@ -56,6 +56,7 @@ pytest-django==4.7.0
 python-crontab==3.0.0
 python-dateutil==2.8.2
 python-dotenv==1.0.0
+python-social-auth==0.3.6
 python3-openid==3.2.0
 pytz==2023.3
 PyYAML==6.0.1
@@ -69,6 +70,7 @@ social-auth-app-django==5.2.0
 social-auth-core==4.4.2
 soupsieve==2.5
 sqlparse==0.4.4
+transliterate==1.10.2
 typing_extensions==4.7.1
 tzdata==2023.3
 uritemplate==4.1.1
