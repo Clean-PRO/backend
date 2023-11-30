@@ -27,7 +27,6 @@ for api_path in ROUTER_DATA:
     router.register(*api_path)
 
 urlpatterns = [
-    path('', include(router.urls)),
     re_path(
         'auth/token/login/',
         TokenCreateSchemaView.as_view(),
@@ -38,4 +37,5 @@ urlpatterns = [
         TokenDestroySchemaView.as_view(),
         name='logout',
     ),
+    path('', include(router.urls)),
 ]
