@@ -8,6 +8,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, '.env'), verbose=True)
 
 
+"""Cache keys settings."""
+
+
+CACHE_LIST_RESPONSE_RATINGS: str = 'cache_list_response_for_rating'
+
+
 """Company data."""
 
 

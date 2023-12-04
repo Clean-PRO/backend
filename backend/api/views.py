@@ -3,6 +3,7 @@
 
 from django.db.models import QuerySet
 from django.contrib.auth import authenticate
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
 from rest_framework import permissions, serializers, status, viewsets
@@ -40,10 +41,12 @@ from api.serializers import (
 )
 from api.utils import create_password, get_available_time_json, send_mail
 from cleanpro.app_data import (
+    CACHE_LIST_RESPONSE_RATINGS,
     EMAIL_CONFIRM_EMAIL_SUBJECT, EMAIL_CONFIRM_EMAIL_TEXT,
     ORDER_ACCEPTED_STATUS, ORDER_CANCELLED_STATUS, ORDER_FINISHED_STATUS,
     SERVICES_ADDITIONAL,
 )
+from cleanpro.settings import CACHE_TIMEOUT_SEC
 from .schemas_views import (
     CLEANING_TYPES_SCHEMA,
     TOKEN_DESTROY_SCHEMA,
@@ -55,7 +58,6 @@ from .schemas_views import (
     USER_SCHEMA,
 )
 from services.models import CleaningType, Measure, Order, Rating, Service
-# from services.signals import get_cached_reviews
 from users.models import User
 
 
@@ -212,12 +214,18 @@ class RatingViewSet(viewsets.ModelViewSet):
     http_method_names = ('get', 'patch',)
     pagination_class = LimitOffsetPagination
 
-    # INFO: временно отключено кэширование
-    # # TODO: Сделать пагинацию.
-    # def list(self, request, *args, **kwargs):
-    #     cached_reviews: list[dict] = get_cached_reviews()
-    #     page = self.paginate_queryset(cached_reviews)
-    #     return Response(page)
+    def list(self, request, *args, **kwargs):
+        # TODO: учесть запрос с limit для главной страницы
+        cached_data: Response = cache.get(CACHE_LIST_RESPONSE_RATINGS)
+        if cached_data:
+            return Response(cached_data)
+        response: Response = super().list(request, *args, **kwargs)
+        cache.set(
+            key=CACHE_LIST_RESPONSE_RATINGS,
+            value=response.data,
+            timeout=CACHE_TIMEOUT_SEC,
+        )
+        return response
 
     def perform_create(self, serializer):
         order_id: int = self.kwargs.get('order_id')

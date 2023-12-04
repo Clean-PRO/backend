@@ -3,11 +3,14 @@
 
 from datetime import datetime, timedelta
 
+from django.db.models.signals import post_delete
 from django.conf import settings
+from django.core.cache import cache
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from cleanpro.app_data import (
+    CACHE_LIST_RESPONSE_RATINGS,
     CLEANING_TIME_MINUTE_MIN,
     CLEANING_TYPE_TITLE_MAX_LEN, CLEANING_TYPE_COEF_MIN_VAL,
     MEASURE_TITLE_MAX_LEN,
@@ -16,6 +19,7 @@ from cleanpro.app_data import (
     SERVICE_PRICE_MIN_VAL, SERVICE_TITLE_MAX_LEN, SERVICE_TYPE,
     SERVICE_TYPE_MAX_LEN,
 )
+from services.receivers import delete_cache_rating
 from users.models import Address
 
 
@@ -285,6 +289,7 @@ class Order(models.Model):
         time_end = time_start + timedelta(minutes=self.total_time)
         self.cleaning_time_end = time_end.time()
         super().save(*args, **kwargs)
+        return
 
 
 class ServicesInOrder(models.Model):
@@ -385,9 +390,12 @@ class Rating(models.Model):
         """
         Добавляет значение поля username для пользователей,
         которые оставили отзыв на сайте к заказу.
+
+        Очищает кэш отзывов, если изменяется или создается отзыв.
         """
         if self.user:
             self.username = self.user.username
+        cache.delete(CACHE_LIST_RESPONSE_RATINGS)
         super().save(*args, **kwargs)
         return
 
@@ -395,3 +403,6 @@ class Rating(models.Model):
         return (
             f'Отзыв {self.username} с оценкой {self.score} от {self.pub_date}.'
         )
+
+
+post_delete.connect(delete_cache_rating)
