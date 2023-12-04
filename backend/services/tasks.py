@@ -2,19 +2,18 @@
 Список задач для Celery.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import requests
 
 from bs4 import BeautifulSoup
 from bs4.element import Tag, ResultSet
 from celery import shared_task
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet
 from rest_framework import status
 
-from cleanpro.app_data import CLEANPRO_YA_MAPS_URL
+from cleanpro.app_data import CACHE_LIST_RESPONSE_RATINGS, CLEANPRO_YA_MAPS_URL
 from services.models import Rating
-from services.signals import update_cached_reviews
 
 
 @shared_task
@@ -22,17 +21,29 @@ def parse_yandex_maps():
     response: requests = requests.get(CLEANPRO_YA_MAPS_URL)
     if not response.status_code == status.HTTP_200_OK:
         raise Exception(
-            f'Указан неверный URL отзыва: "{CLEANPRO_YA_MAPS_URL}"'
+            f'Указан невалидный URL: "{CLEANPRO_YA_MAPS_URL}"'
         )
-    soup: BeautifulSoup = BeautifulSoup(response.text, features="html.parser")
-    if not soup:
+    soup: BeautifulSoup = BeautifulSoup(response.text, features='html.parser')
+    if not soup.find():
         raise Exception('Отзывы отсутствуют.')
     all_comment_elements: ResultSet = soup.find_all('div', class_='comment')
-    all_comments: QuerySet = Rating.objects.all()
+    last_comment: Rating = (
+        Rating.objects.filter(from_maps=True).order_by('-id').first()
+    )
+    if last_comment:
+        last_comment_text: str = last_comment.text
+        # INFO: в Я.Картах отзывы сортируются от новых к старым.
+        #       Если отзывы с Я.Карт не были импортированы, их надо в первый
+        #       раз загрузить/прочитать в обратном порядке (-1).
+        direction: int = 1
+    else:
+        last_comment_text: None = None
+        direction: int = -1
     new_comments: list[Rating] = []
-    for comment in all_comment_elements:
+    time_now: datetime = datetime.now()
+    for comment in all_comment_elements[::direction]:
         text: str = comment.find('p', class_='comment__text').text.strip()
-        if all_comments.filter(text=text).exists():
+        if text == last_comment_text:
             break
         username: str = comment.find('p', class_='comment__name').text.strip()
         stars_ul: Tag = comment.find('ul', class_='stars-list')
@@ -47,12 +58,7 @@ def parse_yandex_maps():
                 Rating(
                     username=username,
                     from_maps=True,
-                    # INFO: на картах просто указывается что-то вроде
-                    #       "1 января" без указания года. Чтобы не
-                    #       усложнять логику - данная задача запускается
-                    #       разв сутки в 00:00 (UTC+3) и записывает
-                    #       "вчерашние" отзывы.
-                    pub_date=datetime.now() - timedelta(days=1),
+                    pub_date=time_now,
                     text=text,
                     score=len(full_stars),
                 )
@@ -61,5 +67,5 @@ def parse_yandex_maps():
             continue
     if new_comments:
         Rating.objects.bulk_create(new_comments)
-        update_cached_reviews()
+        cache.delete(CACHE_LIST_RESPONSE_RATINGS)
     return
